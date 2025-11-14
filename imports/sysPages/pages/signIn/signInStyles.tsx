@@ -2,10 +2,11 @@ import React from 'react';
 import Paper from '@mui/material/Paper';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
-import { sysSizing } from '../../../ui/materialui/styles';
 
 interface ISignInStyles {
 	Container: React.ElementType;
+	Header: React.ElementType;
+	HeaderContent: React.ElementType;
 	Content: React.ElementType;
 	FormContainer: React.ElementType;
 	FormWrapper: React.ElementType;
@@ -15,46 +16,47 @@ const SignInStyles: ISignInStyles = {
 	Container: styled(Box)(({ theme }) => ({
 		minHeight: '100vh',
 		width: '100%',
-		backgroundColor: theme.palette.primary.main,
-		color: theme.palette.primary.contrastText,
-		position: 'relative',
-
-		[theme.breakpoints.up('md')]: {
-			backgroundImage: 'url(/images/wireframe/background-synergia.svg)',
-			backgroundSize: 'cover',
-			backgroundPosition: 'right'
-		}
+		backgroundColor: theme.palette.background.default,
+		display: 'flex',
+		flexDirection: 'column',
+		padding: theme.spacing(2)
+	})),
+	Header: styled(Box)(({ theme }) => ({
+		width: '100%',
+		padding: theme.spacing(2),
+		display: 'flex',
+		justifyContent: 'space-between',
+		alignItems: 'center'
+	})),
+	HeaderContent: styled(Box)(({ theme }) => ({
+		display: 'flex',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		width: '100%',
+		gap: theme.spacing(2)
 	})),
 	Content: styled(Box)(({ theme }) => ({
 		width: '100%',
-		height: '100%',
+		maxWidth: '400px',
 		display: 'flex',
 		flexDirection: 'column',
-		justifyContent: 'space-evenly',
+		justifyContent: 'center',
 		alignItems: 'center',
-		gap: theme.spacing(6),
-		padding: `${sysSizing.spacingFixedLg} ${sysSizing.spacingFixedXl}`,
-
-		[theme.breakpoints.up('md')]: {
-			width: 'auto',
-			height: 'auto',
-			position: 'absolute',
-			top: '50%',
-			left: '10%',
-			transform: 'translateY(-50%)'
-		}
+		gap: theme.spacing(3),
+		margin: '0 auto',
+		padding: theme.spacing(2)
 	})),
 	FormContainer: styled(Paper)(({ theme }) => ({
 		width: '100%',
-		padding: `${sysSizing.spacingFixedLg} ${sysSizing.spacingFixedXl}`,
-		borderRadius: sysSizing.radiusLg,
-		boxShadow: theme.shadows[3],
-		gap: sysSizing.spacingFixedXl,
+		padding: theme.spacing(3),
+		borderRadius: theme.shape.borderRadius,
+		boxShadow: 'none',
 		display: 'flex',
 		flexDirection: 'column',
 		justifyContent: 'flex-start',
 		alignItems: 'center',
-		maxWidth: '400px'
+		gap: theme.spacing(2),
+		border: '1px solid lightgray'
 	})),
 	FormWrapper: styled(Box)(({ theme }) => ({
 		width: '100%',

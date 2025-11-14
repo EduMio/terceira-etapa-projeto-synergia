@@ -5,9 +5,9 @@ import { ISchema } from '../../../typings/ISchema';
 export const signInSchema: ISchema<ISignIn> = {
 	email: {
 		type: 'String',
-		label: 'Email',
+		label: 'E-mail',
 		optional: false,
-		defaultValue: 'admin@mrb.com',
+		defaultValue: 'mail@mail.com',
 		validationFunction: (value: string) => {
 			if (!value) return undefined;
 			const email = validarEmail(value);
@@ -19,7 +19,7 @@ export const signInSchema: ISchema<ISignIn> = {
 		type: 'String',
 		label: 'Senha',
 		optional: false,
-		defaultValue: 'admin@mrb.com'
+		defaultValue: ''
 	}
 };
 

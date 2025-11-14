@@ -8,7 +8,7 @@ import { signInSchema } from './signinsch';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import SysIcon from '../../../ui/components/sysIcon/sysIcon';
+import Avatar from '@mui/material/Avatar';
 import AuthContext, { IAuthContext } from '/imports/app/authProvider/authContext';
 import AppLayoutContext from '/imports/app/appLayoutProvider/appLayoutContext';
 
@@ -16,7 +16,7 @@ const SignInPage: React.FC = () => {
 	const { showNotification } = useContext(AppLayoutContext);
 	const { user, signIn } = useContext<IAuthContext>(AuthContext);
 	const navigate = useNavigate();
-	const { Container, Content, FormContainer, FormWrapper } = SignInStyles;
+	const { Container, Header, HeaderContent, Content, FormContainer, FormWrapper } = SignInStyles;
 
 	const handleSubmit = ({ email, password }: { email: string; password: string }) => {
 		signIn(email, password, (err) => {
@@ -27,9 +27,10 @@ const SignInPage: React.FC = () => {
 				message: 'Email ou senha inválidos',
 			});
 		});
-;	};
+	};
 
 	const handleForgotPassword = () => navigate('/password-recovery');
+	const handleRegister = () => navigate('/signup');
 
 	useEffect(() => {
 		if (user) navigate('/');
@@ -38,34 +39,60 @@ const SignInPage: React.FC = () => {
 	return (
 		<Container>
 			<Content>
-				<Typography variant="h1" display={'inline-flex'} gap={1}>
-					<Typography variant="inherit" color={(theme) => theme.palette.sysText?.tertiary}>
-						{'{'}
-					</Typography>
-					Boilerplate
-					<Typography variant="inherit" color="sysText.tertiary">
-						{'}'}
-					</Typography>
-				</Typography>
+				<Typography variant="h1" fontWeight="900" sx={{ 
+					color: 'black', 
+					fontStyle: 'normal',
+					fontSize: '60px',
+					lineHeight: '100%',
+					letterSpacing: '0.15%',
+					textAlign: 'center',
+					leadingTrim: 'NONE'
 
-				<FormContainer>
-					<Typography variant="h5">Acesse o sistema</Typography>
-					<SysForm schema={signInSchema} onSubmit={handleSubmit} debugAlerts={false}>
+				}}>
+					ToDo List
+				</Typography>
+				
+				<Typography variant="body1" sx={{ 
+					color: 'black', 
+					textAlign: 'center', 
+					mt: 2, 
+					mb: 4 ,
+					fontWeight: 400,
+					fontSize: 18,
+				}}>
+					Boas-vindas a sua lista de tarefas.<br />Insira seu e-mail e senha para efetuar o login:
+				</Typography>
+				
+				
+				<SysForm schema={signInSchema} onSubmit={handleSubmit} debugAlerts={false}>
+					<FormContainer>
 						<FormWrapper>
-							<SysTextField name="email" label="Email" fullWidth placeholder="Digite seu email" />
-							<SysTextField label="Senha" fullWidth name="password" placeholder="Digite sua senha" type="password" />
-							<Button variant="text" sx={{ alignSelf: 'flex-end' }} onClick={handleForgotPassword}>
-								<Typography variant="link">Esqueci minha senha</Typography>
-							</Button>
-							<Box />
-							<SysFormButton variant="contained" color="primary" endIcon={<SysIcon name={'arrowForward'} />}>
+							<SysTextField name="email" label="E-mail" fullWidth placeholder="sandasouza@gmail.com" />
+							<SysTextField label="Senha" fullWidth name="password" placeholder="••••••••" type="password" />
+							<SysFormButton variant="contained" color="primary" fullWidth>
 								Entrar
 							</SysFormButton>
 						</FormWrapper>
-					</SysForm>
-				</FormContainer>
-
-				<Box component="img" src="/images/wireframe/synergia-logo.svg" sx={{ width: '100%', maxWidth: '400px' }} />
+					</FormContainer>
+				</SysForm>
+				
+				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, mt: 4 }}>
+					<Button 
+						variant="text" 
+						sx={{ color: 'black', textAlign: 'left' }} 
+						onClick={handleForgotPassword}
+					>
+						<Typography variant="body2">Esqueceu sua senha? Clique aqui</Typography>
+					</Button>
+					
+					<Button 
+						variant="text" 
+						sx={{ color: 'black', textAlign: 'left' }} 
+						onClick={handleRegister}
+					>
+						<Typography variant="body2">Novo por aqui? Cadastre-se</Typography>
+					</Button>
+				</Box>
 			</Content>
 		</Container>
 	);

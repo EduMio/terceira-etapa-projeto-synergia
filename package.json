@@ -17,6 +17,7 @@
     "@date-io/date-fns": "^3.0.0",
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
+    "@fontsource/roboto": "^5.2.8",
     "@mui/icons-material": "^5.16.6",
     "@mui/material": "^5.16.6",
     "@mui/x-data-grid": "^7.12.0",
