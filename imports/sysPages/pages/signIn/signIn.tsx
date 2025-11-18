@@ -16,16 +16,18 @@ const SignInPage: React.FC = () => {
 	const { showNotification } = useContext(AppLayoutContext);
 	const { user, signIn } = useContext<IAuthContext>(AuthContext);
 	const navigate = useNavigate();
-	const { Container, Header, HeaderContent, Content, FormContainer, FormWrapper } = SignInStyles;
+	const { Container, Content, FormContainer, FormWrapper } = SignInStyles;
 
 	const handleSubmit = ({ email, password }: { email: string; password: string }) => {
 		signIn(email, password, (err) => {
-			if (!err) navigate('/');
-			showNotification({
-				type: 'error',
-				title: 'Erro ao tentar logar',
-				message: 'Email ou senha inválidos',
-			});
+			if (!err) 
+				navigate('/');
+			else
+				showNotification({
+					type: 'error',
+					title: 'Erro ao tentar logar',
+					message: 'Email ou senha inválidos',
+				});
 		});
 	};
 
@@ -33,7 +35,8 @@ const SignInPage: React.FC = () => {
 	const handleRegister = () => navigate('/signup');
 
 	useEffect(() => {
-		if (user) navigate('/');
+		if (user) 
+			navigate('/');
 	}, [user]);
 
 	return (
@@ -67,7 +70,7 @@ const SignInPage: React.FC = () => {
 				<SysForm schema={signInSchema} onSubmit={handleSubmit} debugAlerts={false}>
 					<FormContainer>
 						<FormWrapper>
-							<SysTextField name="email" label="E-mail" fullWidth placeholder="sandasouza@gmail.com" />
+							<SysTextField name="email" label="E-mail" fullWidth placeholder="mail@mail.com" />
 							<SysTextField label="Senha" fullWidth name="password" placeholder="••••••••" type="password" />
 							<SysFormButton variant="contained" color="primary" fullWidth>
 								Entrar
