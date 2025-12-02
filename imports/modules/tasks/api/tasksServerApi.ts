@@ -2,6 +2,7 @@
 import { Recurso } from '../config/recursos';
 import { tasksSch, ITask } from './tasksSch';
 import { ProductServerBase } from '../../../api/productServerBase';
+import { IContext } from '../../../typings/IContext';
 
 // endregion
 
@@ -45,6 +46,27 @@ class TasksServerApi extends ProductServerBase<ITask> {
 				}
 			});
 		});
+	}
+
+	private resolveUserId(context: IContext): string {
+		const user = context?.user as any;
+		return user?._id || user?.id || user?.userId || 'Sistema';
+	}
+
+	async beforeInsert(doc: Partial<ITask>, context: IContext) {
+		await super.beforeInsert(doc, context);
+		const now = new Date();
+		doc.createdAt = doc.createdAt || now;
+		doc.updatedAt = now;
+		doc.status = doc.status || 'pending';
+		doc.createdBy = doc.createdBy || this.resolveUserId(context);
+		return true;
+	}
+
+	async beforeUpdate(doc: Partial<ITask>, context: IContext) {
+		await super.beforeUpdate(doc, context);
+		doc.updatedAt = new Date();
+		return true;
 	}
 }
 

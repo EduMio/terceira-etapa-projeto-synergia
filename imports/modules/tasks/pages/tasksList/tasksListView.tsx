@@ -1,6 +1,5 @@
 import React, { useContext } from 'react';
 import { TasksListControllerContext } from './tasksListController';
-import { useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -34,6 +33,16 @@ const TaskSection = styled(Box)(({ theme }) => ({
 	flexDirection: 'column',
 	width: '100%',
 	marginTop: theme.spacing(4),
+}));
+
+const TaskSectionHeader = styled(Box)(({ theme }) => ({
+	display: 'flex',
+	flexDirection: 'row',
+	justifyContent: 'space-between',
+	alignItems: 'center',
+	gap: theme.spacing(2),
+	flexWrap: 'wrap',
+	marginBottom: theme.spacing(2)
 }));
 
 const TaskItem = styled(Box)(({ theme }) => ({
@@ -99,10 +108,6 @@ const ActionsMenu = styled(Button)(({ theme }) => ({
 const TasksListView = () => {
 	const controller = useContext(TasksListControllerContext);
 	
-	const handleGoToTasks = () => {
-		controller.onGoToTasksClick();
-	};
-	
 	return (
 		<Container>
 			<WelcomeSection>
@@ -113,7 +118,16 @@ const TasksListView = () => {
 			</WelcomeSection>
 			
 			<TaskSection>
-				<Typography variant="h5" sx={{ color: '#444444', mb: 2 }}>Recently Added</Typography>
+				<TaskSectionHeader>
+					<Typography variant="h5" sx={{ color: '#444444' }}>Recently Added</Typography>
+					<Button
+						variant="contained"
+						startIcon={<SysIcon name="add" />}
+						onClick={controller.onAddTaskClick}
+					>
+						Add Task
+					</Button>
+				</TaskSectionHeader>
 				
 				{controller.loading ? (
 					<Typography variant="body1">Loading tasks...</Typography>
@@ -152,7 +166,7 @@ const TasksListView = () => {
 							backgroundColor: '#D0D0D0',
 						},
 					}}
-					onClick={handleGoToTasks}
+					onClick={controller.onGoToTasksClick}
 				>
 					Go to Tasks
 					<SysIcon name="arrowForward" sx={{ ml: 1 }} />

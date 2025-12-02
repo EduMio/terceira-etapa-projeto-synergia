@@ -10,6 +10,7 @@ interface ITasksListContollerContext {
 	tasks: ITask[];
 	loading: boolean;
 	onGoToTasksClick: () => void;
+	onAddTaskClick: () => void;
 }
 
 export const TasksListControllerContext = React.createContext<ITasksListContollerContext>(
@@ -31,15 +32,20 @@ const TasksListController = () => {
 	
 	const onGoToTasksClick = useCallback(() => {
 		navigate('/tasks');
-	}, []);
+	}, [navigate]);
+
+	const onAddTaskClick = useCallback(() => {
+		navigate('/tasks/create');
+	}, [navigate]);
 	
 	const providerValues: ITasksListContollerContext = useMemo(
 		() => ({
 			tasks,
 			loading,
-			onGoToTasksClick
+			onGoToTasksClick,
+			onAddTaskClick
 		}),
-		[tasks, loading]
+		[tasks, loading, onGoToTasksClick, onAddTaskClick]
 	);
 	
 	return (

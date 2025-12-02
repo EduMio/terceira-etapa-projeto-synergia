@@ -18,19 +18,19 @@ export const tasksSch: ISchema<ITask> = {
 		type: Date,
 		label: 'Criado em',
 		defaultValue: new Date(),
-		optional: false
+		optional: true
 	},
 	updatedAt: {
 		type: Date,
 		label: 'Atualizado em',
 		defaultValue: new Date(),
-		optional: false
+		optional: true
 	},
 	createdBy: {
 		type: String,
 		label: 'Criado por',
 		defaultValue: '',
-		optional: false
+		optional: true
 	},
 	status: {
 		type: String,
@@ -52,10 +52,10 @@ export const tasksSch: ISchema<ITask> = {
 
 export interface ITask extends IDoc {
 	title: string;
-	description: string;
-	createdAt: Date;
-	updatedAt: Date;
-	createdBy: string;
+	description?: string;
+	createdAt?: Date;
+	updatedAt?: Date;
+	createdBy?: string;
 	status: 'pending' | 'completed';
 	assignedTo?: string;
 }

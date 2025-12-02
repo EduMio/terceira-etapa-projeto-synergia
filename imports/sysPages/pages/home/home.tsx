@@ -1,5 +1,5 @@
 // File: imports/sysPages/pages/home/home.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
@@ -8,28 +8,30 @@ import Box from '@mui/material/Box';
 import SysIcon from '/imports/ui/components/sysIcon/sysIcon';
 import { styled } from '@mui/material/styles';
 import { tasksApi } from '/imports/modules/tasks/api/tasksApi';
+import { ITask } from '/imports/modules/tasks/api/tasksSch';
+import SysMenu, { ISysMenuItem, ISysMenuRef } from '/imports/ui/components/sysMenu/sysMenuProvider';
 
 // Styled components for the home page
 const Container = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center',
+  alignItems: 'stretch',
   justifyContent: 'flex-start',
   width: '100%',
   maxWidth: '1200px',
   margin: '0 auto',
-  padding: theme.spacing(4),
+  padding: theme.spacing(6),
   marginTop: '56px',
 }));
 
 const WelcomeSection = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center',
+  alignItems: 'flex-start',
   justifyContent: 'center',
   width: '100%',
   marginBottom: theme.spacing(4),
-  textAlign: 'center'
+  textAlign: 'left'
 }));
 
 const TaskSection = styled(Box)(({ theme }) => ({
@@ -39,21 +41,27 @@ const TaskSection = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(4),
 }));
 
+const TaskSectionHeader = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: theme.spacing(2),
+  flexWrap: 'wrap',
+  marginBottom: theme.spacing(2)
+}));
+
 const TaskItem = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  padding: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: theme.palette.background.paper,
-  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-  transition: 'background-color 0.2s',
-  '&:hover': {
-    backgroundColor: theme.palette.grey[50],
-  },
+  padding: theme.spacing(1.5, 0),
+  marginBottom: theme.spacing(0.5),
+  borderBottom: `1px solid ${theme.palette.grey[200]}`,
 }));
 
-const TaskCheckbox = styled('div')(({ theme, completed }) => ({
+const TaskCheckbox = styled('div', {
+  shouldForwardProp: (prop) => prop !== 'completed'
+})<{ completed: boolean }>(({ theme, completed }) => ({
   width: 24,
   height: 24,
   borderRadius: '50%',
@@ -90,49 +98,119 @@ const TaskCreator = styled(Typography)(({ theme }) => ({
   marginTop: theme.spacing(0.5),
 }));
 
-const ActionsMenu = styled(Button)(({ theme }) => ({
+const TaskMeta = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  flexWrap: 'wrap',
+  marginTop: theme.spacing(0.5),
+}));
+
+const ActionsButton = styled(Button)(({ theme }) => ({
   minWidth: 'auto',
   padding: theme.spacing(0.5),
-  color: theme.palette.text.secondary,
+  marginLeft: theme.spacing(1),
+  color: '#666666',
   '&:hover': {
-    backgroundColor: theme.palette.grey[100],
+    backgroundColor: '#F0F0F0',
+  },
+}));
+
+const FooterSection = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: theme.spacing(6),
+  marginBottom: theme.spacing(4),
+  gap: theme.spacing(2),
+}));
+
+const PaginationContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: theme.spacing(1),
+}));
+
+const PaginationButton = styled(Button)(({ theme }) => ({
+  minWidth: 0,
+  width: 36,
+  height: 36,
+  borderRadius: 18,
+  padding: 0,
+  backgroundColor: '#333333',
+  color: '#B0B0B0',
+  '&:hover': {
+    backgroundColor: '#000000',
   },
 }));
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const [recentTasks, setRecentTasks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const menuRef = useRef<ISysMenuRef>(null);
+  const [selectedTask, setSelectedTask] = React.useState<ITask | null>(null);
   
-  // Get tasks data using Meteor's tracker
-  const tasks = useTracker(() => {
-    const subHandle = tasksApi.subscribe('tasks.recent');
-    if (!subHandle?.ready()) {
-      return [];
-    }
-    return tasksApi.find({}, { sort: { updatedAt: -1 }, limit: 5 }).fetch();
+  const currentUser = useTracker(() => {
+    return Meteor.user();
   }, []);
   
-  useEffect(() => {
-    setRecentTasks(tasks);
-    setLoading(false);
-  }, [tasks]);
+  const username = currentUser?.profile?.name || currentUser?.username || currentUser?.emails?.[0]?.address || 'Usuário';
+  const firstName = username?.split(' ')?.[0] || username;
+
+  const { loading, recentTasks } = useTracker<{ loading: boolean; recentTasks: ITask[] }>(() => {
+    const subHandle = tasksApi.subscribe('tasks.recent');
+    const isReady = !!subHandle && subHandle.ready();
+    return {
+      loading: !isReady,
+      recentTasks: isReady ? tasksApi.find({}, { sort: { updatedAt: -1 }, limit: 5 }).fetch() : []
+    };
+  }, []);
   
   const handleGoToTasks = () => {
     navigate('/tasks');
+  };
+
+  const handleAddTask = () => {
+    navigate('/tasks/create');
+  };
+
+  const taskMenuOptions: ISysMenuItem[] = useMemo(() => [
+    {
+      key: 'edit',
+      onClick: () => selectedTask && navigate(`/tasks/edit/${selectedTask._id}`),
+      otherProps: { children: 'Editar' }
+    },
+    {
+      key: 'delete',
+      onClick: () => selectedTask && console.log('Delete task', selectedTask._id),
+      otherProps: { children: 'Excluir' }
+    },
+    {
+      key: 'share',
+      onClick: () => selectedTask && console.log('Share task', selectedTask._id),
+      otherProps: { children: 'Compartilhar' }
+    }
+  ], [navigate, selectedTask]);
+
+  const handleOpenTaskMenu = (event: React.MouseEvent<HTMLElement>, task: ITask) => {
+    setSelectedTask(task);
+    menuRef.current?.openMenu(event);
   };
   
   return (
     <Container>
       <WelcomeSection>
-        <Typography variant="h3" sx={{ color: '#333333', mb: 1 }}>Hello, Sandra Souza</Typography>
-        <Typography variant="body1" sx={{ color: '#666666', lineHeight: 1.5, mb: 2 }}>
-          Your projects much more organized. See the tasks added by your team, by you, and for you!
+        <Typography variant="h3" sx={{ color: '#333333', mb: 1, fontWeight: 'bold', fontSize: 32 }}>Olá, {firstName}</Typography>
+        <Typography variant="body1" sx={{ color: '#666666', lineHeight: 1.5, mb: 2, fontSize: 16 }}>
+          Seus projetos muito mais organizados. Veja as tarefas adicionadas pela sua equipe, por você e para você!
         </Typography>
       </WelcomeSection>
       
       <TaskSection>
-        <Typography variant="h5" sx={{ color: '#444444', mb: 2 }}>Recently Added</Typography>
+        <TaskSectionHeader>
+          <Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>Adicionadas Recentemente</Typography>
+        </TaskSectionHeader>
         
         {loading ? (
           <Typography variant="body1">Loading tasks...</Typography>
@@ -141,42 +219,74 @@ const HomePage: React.FC = () => {
         ) : (
           recentTasks.map((task) => (
             <TaskItem key={task._id}>
-              <TaskCheckbox completed={task.status === 'completed'} />
+              <TaskCheckbox
+                completed={task.status === 'completed'}
+                aria-label={`Checkbox para tarefa ${task.title}`}
+              />
               <TaskInfo>
                 <TaskTitle>{task.title}</TaskTitle>
-                <TaskCreator>
-                  Created by: {task.createdBy === Meteor.userId() ? 'You' : task.createdBy}
-                </TaskCreator>
+                <TaskMeta>
+                  <TaskCreator
+                    component="span"
+                    sx={{
+                      color: task.createdBy === Meteor.userId() ? '#333333' : '#888888'
+                    }}
+                  >
+                    Criada por: {task.createdBy === Meteor.userId() ? 'Você' : (task.createdBy || 'N/A')}
+                  </TaskCreator>
+                </TaskMeta>
               </TaskInfo>
-              <ActionsMenu>
+              <ActionsButton
+                aria-label="Menu de ações"
+                onClick={(event) => handleOpenTaskMenu(event, task)}
+              >
                 <SysIcon name="moreVert" />
-              </ActionsMenu>
+              </ActionsButton>
             </TaskItem>
           ))
         )}
       </TaskSection>
       
-      <Box display="flex" justifyContent="center" mt={4} mb={4}>
+      <FooterSection>
         <Button
           variant="contained"
           sx={{
             width: 240,
             height: 52,
-            borderRadius: 2,
+            borderRadius: 8,
             backgroundColor: '#E0E0E0',
             color: '#333333',
             fontWeight: 'bold',
             fontSize: 16,
+            textTransform: 'none',
             '&:hover': {
               backgroundColor: '#D0D0D0',
+            },
+            '&:active': {
+              backgroundColor: '#C0C0C0',
             },
           }}
           onClick={handleGoToTasks}
         >
-          Go to Tasks
-          <SysIcon name="arrowForward" sx={{ ml: 1 }} />
+          Ir para Tarefas
+          <SysIcon name="doubleArrow" sx={{ ml: 1 }} />
         </Button>
-      </Box>
+
+        <PaginationContainer aria-label="Paginação de atividades recentes">
+          <PaginationButton aria-label="Página anterior">
+            {'<'}
+          </PaginationButton>
+          <PaginationButton aria-label="Próxima página">
+            {'>'}
+          </PaginationButton>
+        </PaginationContainer>
+      </FooterSection>
+
+      <SysMenu
+        ref={menuRef}
+        options={taskMenuOptions}
+        MenuListProps={{ 'aria-label': 'Opções da tarefa selecionada' }}
+      />
     </Container>
   );
 };

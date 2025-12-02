@@ -9,7 +9,6 @@ import SysIcon from '../../../../ui/components/sysIcon/sysIcon';
 import SysForm from '../../../../ui/components/sysForm/sysForm';
 import SysTextField from '../../../../ui/components/sysFormFields/sysTextField/sysTextField';
 import { SysSelectField } from '../../../../ui/components/sysFormFields/sysSelectField/sysSelectField';
-import { SysCheckBox } from '../../../../ui/components/sysFormFields/sysCheckBoxField/sysCheckBoxField';
 import SysFormButton from '../../../../ui/components/sysFormFields/sysFormButton/sysFormButton';
 import { styled } from '@mui/material/styles';
 
@@ -73,7 +72,7 @@ const TasksDetailView = () => {
 	const isView = state === 'view';
 	const isEdit = state === 'edit';
 	const isCreate = state === 'create';
-	
+
 	return (
 		<Container>
 			<Header>
@@ -106,11 +105,10 @@ const TasksDetailView = () => {
 							multiline
 							rows={4}
 						/>
-						<SysSelectField name="status" placeholder="Selecionar status" />
-						<SysTextField name="assignedTo" placeholder="Atribuído para" />
 					</FormColumn>
 					<FormColumn>
-						<SysCheckBox name="completed" label="Concluído" />
+						<SysSelectField name="status" placeholder="Selecionar status" />
+						<SysTextField name="assignedTo" placeholder="Atribuído para" />
 					</FormColumn>
 				</Body>
 				<Footer>
@@ -119,7 +117,7 @@ const TasksDetailView = () => {
 							Cancelar
 						</Button>
 					)}
-					<SysFormButton>Salvar</SysFormButton>
+					{!isView && <SysFormButton>Salvar</SysFormButton>}
 				</Footer>
 			</SysForm>
 		</Container>
