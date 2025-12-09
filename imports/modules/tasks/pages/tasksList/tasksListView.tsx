@@ -1,31 +1,33 @@
 import React, { useContext } from 'react';
-import { TasksListControllerContext } from './tasksListController';
+import { useTracker } from 'meteor/react-meteor-data';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import SysIcon from '../../../../ui/components/sysIcon/sysIcon';
 import { styled } from '@mui/material/styles';
+import { TasksListControllerContext } from './tasksListController';
 
 const Container = styled(Box)(({ theme }) => ({
 	display: 'flex',
 	flexDirection: 'column',
-	alignItems: 'center',
+	alignItems: 'stretch',
 	justifyContent: 'flex-start',
 	width: '100%',
 	maxWidth: '1200px',
 	margin: '0 auto',
-	padding: theme.spacing(4),
+	padding: theme.spacing(6),
 	marginTop: '56px',
 }));
 
 const WelcomeSection = styled(Box)(({ theme }) => ({
 	display: 'flex',
 	flexDirection: 'column',
-	alignItems: 'center',
+	alignItems: 'flex-start',
 	justifyContent: 'center',
 	width: '100%',
 	marginBottom: theme.spacing(4),
-	textAlign: 'center'
+	textAlign: 'left',
+	gap: theme.spacing(1)
 }));
 
 const TaskSection = styled(Box)(({ theme }) => ({
@@ -33,6 +35,7 @@ const TaskSection = styled(Box)(({ theme }) => ({
 	flexDirection: 'column',
 	width: '100%',
 	marginTop: theme.spacing(4),
+	gap: theme.spacing(1.5)
 }));
 
 const TaskSectionHeader = styled(Box)(({ theme }) => ({
@@ -48,18 +51,14 @@ const TaskSectionHeader = styled(Box)(({ theme }) => ({
 const TaskItem = styled(Box)(({ theme }) => ({
 	display: 'flex',
 	alignItems: 'center',
-	padding: theme.spacing(2),
-	marginBottom: theme.spacing(2),
-	borderRadius: theme.shape.borderRadius,
-	backgroundColor: theme.palette.background.paper,
-	boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-	transition: 'background-color 0.2s',
-	'&:hover': {
-		backgroundColor: theme.palette.grey[50],
-	},
+	padding: theme.spacing(1.5, 0),
+	marginBottom: theme.spacing(0.5),
+	borderBottom: `1px solid ${theme.palette.grey[200]}`,
 }));
 
-const TaskCheckbox = styled('div')(({ theme, completed }) => ({
+const TaskCheckbox = styled('div', {
+	shouldForwardProp: (prop) => prop !== 'completed'
+})<{ completed: boolean }>(({ theme, completed }) => ({
 	width: 24,
 	height: 24,
 	borderRadius: '50%',
@@ -82,6 +81,7 @@ const TaskInfo = styled(Box)(({ theme }) => ({
 	flexDirection: 'column',
 	flexGrow: 1,
 	marginLeft: theme.spacing(1),
+	gap: theme.spacing(0.5),
 }));
 
 const TaskTitle = styled(Typography)(({ theme }) => ({
@@ -96,82 +96,135 @@ const TaskCreator = styled(Typography)(({ theme }) => ({
 	marginTop: theme.spacing(0.5),
 }));
 
-const ActionsMenu = styled(Button)(({ theme }) => ({
+const TaskMeta = styled(Box)(({ theme }) => ({
+	display: 'flex',
+	alignItems: 'center',
+	gap: theme.spacing(1),
+	flexWrap: 'wrap',
+}));
+
+const ActionsButton = styled(Button)(({ theme }) => ({
 	minWidth: 'auto',
 	padding: theme.spacing(0.5),
-	color: theme.palette.text.secondary,
+	marginLeft: theme.spacing(1),
+	color: '#666666',
 	'&:hover': {
-		backgroundColor: theme.palette.grey[100],
+		backgroundColor: '#F0F0F0',
 	},
+}));
+
+const FooterSection = styled(Box)(({ theme }) => ({
+	display: 'flex',
+	flexDirection: 'column',
+	alignItems: 'center',
+	justifyContent: 'center',
+	marginTop: theme.spacing(6),
+	marginBottom: theme.spacing(4),
+	gap: theme.spacing(2),
 }));
 
 const TasksListView = () => {
 	const controller = useContext(TasksListControllerContext);
+	const currentUser = useTracker(() => Meteor.user(), []);
+	const username = currentUser?.profile?.name || currentUser?.username || currentUser?.emails?.[0]?.address || 'Usuário';
+	const firstName = username?.split(' ')?.[0] || username;
 	
 	return (
 		<Container>
 			<WelcomeSection>
-				<Typography variant="h3" sx={{ color: '#333333', mb: 1 }}>Hello, Sandra Souza</Typography>
-				<Typography variant="body1" sx={{ color: '#666666', lineHeight: 1.5, mb: 2 }}>
-					Your projects much more organized. See the tasks added by your team, by you, and for you!
+				<Typography variant="h3" sx={{ color: '#333333', mb: 1, fontWeight: 'bold', fontSize: 32 }}>
+					Olá, {firstName}
+				</Typography>
+				<Typography variant="body1" sx={{ color: '#666666', lineHeight: 1.5, mb: 2, fontSize: 16 }}>
+					Seus projetos muito mais organizados. Veja as tarefas adicionadas pela sua equipe, por você e para você!
 				</Typography>
 			</WelcomeSection>
 			
 			<TaskSection>
 				<TaskSectionHeader>
-					<Typography variant="h5" sx={{ color: '#444444' }}>Recently Added</Typography>
+					<Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>
+						Adicionadas Recentemente
+					</Typography>
 					<Button
 						variant="contained"
 						startIcon={<SysIcon name="add" />}
 						onClick={controller.onAddTaskClick}
+						sx={{
+							textTransform: 'none',
+							fontWeight: 600,
+							backgroundColor: '#E0E0E0',
+							color: '#333333',
+							boxShadow: 'none',
+							'&:hover': {
+								backgroundColor: '#D0D0D0',
+								boxShadow: 'none',
+							},
+							'&:active': {
+								backgroundColor: '#C0C0C0',
+							},
+						}}
 					>
-						Add Task
+						Adicionar tarefa
 					</Button>
 				</TaskSectionHeader>
 				
 				{controller.loading ? (
-					<Typography variant="body1">Loading tasks...</Typography>
+					<Typography variant="body1">Carregando tarefas...</Typography>
 				) : controller.tasks.length === 0 ? (
-					<Typography variant="body1">No tasks found</Typography>
+					<Typography variant="body1">Tarefas não encontradas</Typography>
 				) : (
 					controller.tasks.map((task) => (
 						<TaskItem key={task._id}>
-							<TaskCheckbox completed={task.status === 'completed'} />
+							<TaskCheckbox
+								completed={task.status === 'completed'}
+								aria-label={`Checkbox para tarefa ${task.title}`}
+							/>
 							<TaskInfo>
 								<TaskTitle>{task.title}</TaskTitle>
-								<TaskCreator>
-									Created by: {task.createdBy === Meteor.userId() ? 'You' : task.createdBy}
-								</TaskCreator>
+								<TaskMeta>
+									<TaskCreator
+										component="span"
+										sx={{
+											color: task.createdBy === Meteor.userId() ? '#333333' : '#888888'
+										}}
+									>
+										Criada por: {task.createdBy === Meteor.userId() ? 'Você' : (task.createdBy || 'N/A')}
+									</TaskCreator>
+								</TaskMeta>
 							</TaskInfo>
-							<ActionsMenu>
+							<ActionsButton aria-label="Menu de ações">
 								<SysIcon name="moreVert" />
-							</ActionsMenu>
+							</ActionsButton>
 						</TaskItem>
 					))
 				)}
 			</TaskSection>
 			
-			<Box display="flex" justifyContent="center" mt={4} mb={4}>
+			<FooterSection>
 				<Button
 					variant="contained"
 					sx={{
 						width: 240,
 						height: 52,
-						borderRadius: 2,
+						borderRadius: 8,
 						backgroundColor: '#E0E0E0',
 						color: '#333333',
 						fontWeight: 'bold',
 						fontSize: 16,
+						textTransform: 'none',
 						'&:hover': {
 							backgroundColor: '#D0D0D0',
+						},
+						'&:active': {
+							backgroundColor: '#C0C0C0',
 						},
 					}}
 					onClick={controller.onGoToTasksClick}
 				>
-					Go to Tasks
-					<SysIcon name="arrowForward" sx={{ ml: 1 }} />
+					Ir para Tarefas
+					<SysIcon name="doubleArrow" sx={{ ml: 1 }} />
 				</Button>
-			</Box>
+			</FooterSection>
 		</Container>
 	);
 };

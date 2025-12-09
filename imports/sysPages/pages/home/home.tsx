@@ -159,11 +159,16 @@ const HomePage: React.FC = () => {
   const firstName = username?.split(' ')?.[0] || username;
 
   const { loading, recentTasks } = useTracker<{ loading: boolean; recentTasks: ITask[] }>(() => {
-    const subHandle = tasksApi.subscribe('tasks.recent');
+    const userId = Meteor.userId();
+    const userFilter = userId
+      ? { $or: [{ createdBy: userId }, { assignedTo: userId }] }
+      : { _id: null };
+
+    const subHandle = tasksApi.subscribe('tasks.recent', userFilter);
     const isReady = !!subHandle && subHandle.ready();
     return {
       loading: !isReady,
-      recentTasks: isReady ? tasksApi.find({}, { sort: { updatedAt: -1 }, limit: 5 }).fetch() : []
+      recentTasks: isReady ? tasksApi.find(userFilter, { sort: { updatedAt: -1 }, limit: 5 }).fetch() : []
     };
   }, []);
   
@@ -209,7 +214,7 @@ const HomePage: React.FC = () => {
       
       <TaskSection>
         <TaskSectionHeader>
-          <Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>Adicionadas Recentemente</Typography>
+          <Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>Atividades recentes</Typography>
         </TaskSectionHeader>
         
         {loading ? (
@@ -268,7 +273,7 @@ const HomePage: React.FC = () => {
           }}
           onClick={handleGoToTasks}
         >
-          Ir para Tarefas
+          Minhas Tarefas
           <SysIcon name="doubleArrow" sx={{ ml: 1 }} />
         </Button>
 
