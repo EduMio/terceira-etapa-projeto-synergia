@@ -1,10 +1,10 @@
 // File: imports/modules/tasks/pages/tasksList/tasksListController.tsx
 import React, { useCallback, useMemo } from 'react';
-import TasksListView from './tasksListView';
+import TasksListView from './toDosListView';
 import { useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
-import { tasksApi } from '../../api/tasksApi';
-import { ITask } from '../../api/tasksSch';
+import { tasksApi } from '../../api/toDosApi';
+import { ITask } from '../../api/toDosSch';
 
 interface ITasksListContollerContext {
 	tasks: ITask[];

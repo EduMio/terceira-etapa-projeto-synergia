@@ -7,8 +7,8 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import SysIcon from '/imports/ui/components/sysIcon/sysIcon';
 import { styled } from '@mui/material/styles';
-import { tasksApi } from '/imports/modules/tasks/api/tasksApi';
-import { ITask } from '/imports/modules/tasks/api/tasksSch';
+import { tasksApi } from '/imports/modules/toDos/api/toDosApi';
+import { ITask } from '/imports/modules/toDos/api/toDosSch';
 import SysMenu, { ISysMenuItem, ISysMenuRef } from '/imports/ui/components/sysMenu/sysMenuProvider';
 
 // Styled components for the home page

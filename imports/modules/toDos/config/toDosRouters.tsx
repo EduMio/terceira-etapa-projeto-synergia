@@ -1,9 +1,9 @@
 // File: imports/modules/tasks/config/tasksRouters.tsx
-import TasksContainer from '../tasksContainer';
+import TasksContainer from '../toDosContainer';
 import { Recurso } from './recursos';
-import { IRoute } from '../../../modules/modulesTypings';
+import { IRoute } from '../../modulesTypings';
 
-export const tasksRouterList: (IRoute | null)[] = [
+export const toDosRouterList: (IRoute | null)[] = [
 	{
 		path: '/tasks/:screenState/:taskId',
 		component: TasksContainer,

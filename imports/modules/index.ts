@@ -1,15 +1,15 @@
 import { IAppMenu, IModuleHub, IRoute } from './modulesTypings';
 import UserProfile from './userprofile/config';
-import Tasks from './tasks';
+import ToDos from './toDos';
 
 const pages: Array<IRoute | null> = [
 	...UserProfile.pagesRouterList,
-	...Tasks.pagesRouterList
+	...ToDos.pagesRouterList
 ];
 
 const menuItens: Array<IAppMenu | null> = [
 	...UserProfile.pagesMenuItemList,
-	...Tasks.pagesMenuItemList
+	...ToDos.pagesMenuItemList
 ];
 
 const Modules: IModuleHub = {

@@ -1,9 +1,9 @@
 import React from 'react';
-import { IAppMenu } from '../../../modules/modulesTypings';
+import { IAppMenu } from '../../modulesTypings';
 import SysIcon from '../../../ui/components/sysIcon/sysIcon';
-import { Recurso } from '../config/recursos';
+import { Recurso } from './recursos';
 
-export const tasksMenuItemList: (IAppMenu | null)[] = [
+export const toDosMenuItemList: (IAppMenu | null)[] = [
 	{
 		path: '/tasks',
 		name: 'Tarefas',

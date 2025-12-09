@@ -1,6 +1,6 @@
 // region Imports
 import { ProductBase } from '../../../api/productBase';
-import { tasksSch, ITask } from './tasksSch';
+import { tasksSch, ITask } from './toDosSch';
 
 class TasksApi extends ProductBase<ITask> {
 	constructor() {

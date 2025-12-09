@@ -1,8 +1,8 @@
 import React from 'react';
 import { IDefaultContainerProps } from '../../typings/BoilerplateDefaultTypings';
 import { useParams } from 'react-router-dom';
-import TasksListController from './pages/tasksList/tasksListController';
-import TasksDetailController from './pages/tasksDetail/tasksDetailController';
+import TasksListController from './pages/toDosList/toDosListController';
+import TasksDetailController from './pages/toDosDetail/tasksDetailController';
 
 export interface ITasksModuleContext {
 	state?: string;

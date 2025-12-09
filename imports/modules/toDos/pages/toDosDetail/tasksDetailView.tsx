@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { TasksDetailControllerContext } from './tasksDetailController';
-import { TasksModuleContext } from '../../tasksContainer';
+import { TasksModuleContext } from '../../toDosContainer';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';

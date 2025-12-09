@@ -1,10 +1,10 @@
 import React, { createContext, useCallback, useContext } from 'react';
 import TasksDetailView from './tasksDetailView';
 import { useNavigate } from 'react-router-dom';
-import { TasksModuleContext } from '../../tasksContainer';
+import { TasksModuleContext } from '../../toDosContainer';
 import { useTracker } from 'meteor/react-meteor-data';
-import { tasksApi } from '../../api/tasksApi';
-import { ITask } from '../../api/tasksSch';
+import { tasksApi } from '../../api/toDosApi';
+import { ITask } from '../../api/toDosSch';
 import { ISchema } from '../../../../typings/ISchema';
 import { IMeteorError } from '../../../../typings/BoilerplateDefaultTypings';
 import AppLayoutContext, { IAppLayoutContext } from '/imports/app/appLayoutProvider/appLayoutContext';
