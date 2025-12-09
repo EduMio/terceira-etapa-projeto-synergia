@@ -1,8 +1,25 @@
 import React, { useContext } from 'react';
+import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Avatar from '@mui/material/Avatar';
+import Checkbox from '@mui/material/Checkbox';
+import IconButton from '@mui/material/IconButton';
+import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Divider from '@mui/material/Divider';
+import CircularProgress from '@mui/material/CircularProgress';
+import Stack from '@mui/material/Stack';
 import SysIcon from '../../../../ui/components/sysIcon/sysIcon';
 import { styled } from '@mui/material/styles';
 import { TasksListControllerContext } from './toDosListController';
@@ -30,97 +47,21 @@ const WelcomeSection = styled(Box)(({ theme }) => ({
 	gap: theme.spacing(1)
 }));
 
-const TaskSection = styled(Box)(({ theme }) => ({
-	display: 'flex',
-	flexDirection: 'column',
-	width: '100%',
-	marginTop: theme.spacing(4),
-	gap: theme.spacing(1.5)
+const ListContainer = styled(Box)(({ theme }) => ({
+	backgroundColor: theme.palette.background.paper,
+	borderRadius: theme.shape.borderRadius,
+	boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+	border: `1px solid ${theme.palette.divider}`,
+	width: '100%'
 }));
 
-const TaskSectionHeader = styled(Box)(({ theme }) => ({
+const HeaderRow = styled(Box)(({ theme }) => ({
 	display: 'flex',
-	flexDirection: 'row',
+	alignItems: 'center',
 	justifyContent: 'space-between',
-	alignItems: 'center',
 	gap: theme.spacing(2),
-	flexWrap: 'wrap',
-	marginBottom: theme.spacing(2)
-}));
-
-const TaskItem = styled(Box)(({ theme }) => ({
-	display: 'flex',
-	alignItems: 'center',
-	padding: theme.spacing(1.5, 0),
-	marginBottom: theme.spacing(0.5),
-	borderBottom: `1px solid ${theme.palette.grey[200]}`,
-}));
-
-const TaskCheckbox = styled('div', {
-	shouldForwardProp: (prop) => prop !== 'completed'
-})<{ completed: boolean }>(({ theme, completed }) => ({
-	width: 24,
-	height: 24,
-	borderRadius: '50%',
-	border: `2px solid ${theme.palette.grey[300]}`,
-	display: 'flex',
-	alignItems: 'center',
-	justifyContent: 'center',
-	flexShrink: 0,
-	backgroundColor: completed ? theme.palette.success.main : theme.palette.common.white,
-	'&:before': {
-		content: completed ? '"✔"' : '""',
-		color: completed ? theme.palette.common.white : 'transparent',
-		fontSize: 16,
-		fontWeight: 'bold',
-	},
-}));
-
-const TaskInfo = styled(Box)(({ theme }) => ({
-	display: 'flex',
-	flexDirection: 'column',
-	flexGrow: 1,
-	marginLeft: theme.spacing(1),
-	gap: theme.spacing(0.5),
-}));
-
-const TaskTitle = styled(Typography)(({ theme }) => ({
-	fontSize: 18,
-	fontWeight: 'bold',
-	color: theme.palette.text.primary,
-}));
-
-const TaskCreator = styled(Typography)(({ theme }) => ({
-	fontSize: 14,
-	color: theme.palette.text.secondary,
-	marginTop: theme.spacing(0.5),
-}));
-
-const TaskMeta = styled(Box)(({ theme }) => ({
-	display: 'flex',
-	alignItems: 'center',
-	gap: theme.spacing(1),
-	flexWrap: 'wrap',
-}));
-
-const ActionsButton = styled(Button)(({ theme }) => ({
-	minWidth: 'auto',
-	padding: theme.spacing(0.5),
-	marginLeft: theme.spacing(1),
-	color: '#666666',
-	'&:hover': {
-		backgroundColor: '#F0F0F0',
-	},
-}));
-
-const FooterSection = styled(Box)(({ theme }) => ({
-	display: 'flex',
-	flexDirection: 'column',
-	alignItems: 'center',
-	justifyContent: 'center',
-	marginTop: theme.spacing(6),
-	marginBottom: theme.spacing(4),
-	gap: theme.spacing(2),
+	marginBottom: theme.spacing(2),
+	flexWrap: 'wrap'
 }));
 
 const TasksListView = () => {
@@ -128,6 +69,18 @@ const TasksListView = () => {
 	const currentUser = useTracker(() => Meteor.user(), []);
 	const username = currentUser?.profile?.name || currentUser?.username || currentUser?.emails?.[0]?.address || 'Usuário';
 	const firstName = username?.split(' ')?.[0] || username;
+
+	const renderSecondaryText = (taskCreatedBy?: string) =>
+		`Criada por: ${taskCreatedBy === Meteor.userId() ? 'Você' : (taskCreatedBy || 'N/A')}`;
+
+	const renderStatusChip = (status: string) => (
+		<Chip
+			size="small"
+			label={status === 'completed' ? 'Concluída' : 'Não concluída'}
+			color={status === 'completed' ? 'success' : 'default'}
+			variant={status === 'completed' ? 'filled' : 'outlined'}
+		/>
+	);
 	
 	return (
 		<Container>
@@ -136,95 +89,164 @@ const TasksListView = () => {
 					Olá, {firstName}
 				</Typography>
 				<Typography variant="body1" sx={{ color: '#666666', lineHeight: 1.5, mb: 2, fontSize: 16 }}>
-					Seus projetos muito mais organizados. Veja as tarefas adicionadas pela sua equipe, por você e para você!
+					Organize e acompanhe suas tarefas. Marque como concluídas, edite, exclua ou visualize rapidamente.
 				</Typography>
-			</WelcomeSection>
-			
-			<TaskSection>
-				<TaskSectionHeader>
-					<Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>
-						Adicionadas Recentemente
-					</Typography>
-					<Button
-						variant="contained"
-						startIcon={<SysIcon name="add" />}
-						onClick={controller.onAddTaskClick}
-						sx={{
-							textTransform: 'none',
-							fontWeight: 600,
-							backgroundColor: '#E0E0E0',
-							color: '#333333',
-							boxShadow: 'none',
-							'&:hover': {
-								backgroundColor: '#D0D0D0',
-								boxShadow: 'none',
-							},
-							'&:active': {
-								backgroundColor: '#C0C0C0',
-							},
-						}}
-					>
-						Adicionar tarefa
-					</Button>
-				</TaskSectionHeader>
-				
-				{controller.loading ? (
-					<Typography variant="body1">Carregando tarefas...</Typography>
-				) : controller.tasks.length === 0 ? (
-					<Typography variant="body1">Tarefas não encontradas</Typography>
-				) : (
-					controller.tasks.map((task) => (
-						<TaskItem key={task._id}>
-							<TaskCheckbox
-								completed={task.status === 'completed'}
-								aria-label={`Checkbox para tarefa ${task.title}`}
-							/>
-							<TaskInfo>
-								<TaskTitle>{task.title}</TaskTitle>
-								<TaskMeta>
-									<TaskCreator
-										component="span"
-										sx={{
-											color: task.createdBy === Meteor.userId() ? '#333333' : '#888888'
-										}}
-									>
-										Criada por: {task.createdBy === Meteor.userId() ? 'Você' : (task.createdBy || 'N/A')}
-									</TaskCreator>
-								</TaskMeta>
-							</TaskInfo>
-							<ActionsButton aria-label="Menu de ações">
-								<SysIcon name="moreVert" />
-							</ActionsButton>
-						</TaskItem>
-					))
-				)}
-			</TaskSection>
-			
-			<FooterSection>
 				<Button
 					variant="contained"
+					startIcon={<SysIcon name="add" />}
+					onClick={controller.onAddTaskClick}
 					sx={{
-						width: 240,
-						height: 52,
-						borderRadius: 8,
+						textTransform: 'none',
+						fontWeight: 600,
 						backgroundColor: '#E0E0E0',
 						color: '#333333',
-						fontWeight: 'bold',
-						fontSize: 16,
-						textTransform: 'none',
+						boxShadow: 'none',
 						'&:hover': {
 							backgroundColor: '#D0D0D0',
+							boxShadow: 'none',
 						},
 						'&:active': {
 							backgroundColor: '#C0C0C0',
 						},
 					}}
-					onClick={controller.onGoToTasksClick}
 				>
-					Ir para Tarefas
-					<SysIcon name="doubleArrow" sx={{ ml: 1 }} />
+					Adicionar tarefa
 				</Button>
-			</FooterSection>
+			</WelcomeSection>
+
+			<HeaderRow>
+				<Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>
+					ToDo List
+				</Typography>
+				<Stack direction="row" spacing={1} alignItems="center">
+					{renderStatusChip('pending')}
+					{renderStatusChip('completed')}
+				</Stack>
+			</HeaderRow>
+
+			<ListContainer>
+				{controller.loading ? (
+					<Box display="flex" alignItems="center" justifyContent="center" py={4} gap={2}>
+						<CircularProgress size={24} />
+						<Typography variant="body1">Carregando tarefas...</Typography>
+					</Box>
+				) : controller.tasks.length === 0 ? (
+					<Box display="flex" alignItems="center" justifyContent="center" py={4}>
+						<Typography variant="body1">Tarefas não encontradas</Typography>
+					</Box>
+				) : (
+					<List disablePadding>
+						{controller.tasks.map((task, idx) => (
+							<React.Fragment key={task._id || idx}>
+								<ListItem
+									secondaryAction={
+										<Stack direction="row" spacing={1} alignItems="center">
+											{renderStatusChip(task.status)}
+											<IconButton
+												edge="end"
+												aria-label="Editar tarefa"
+												onClick={(e) => {
+													e.stopPropagation();
+													controller.onEditTask(task);
+												}}
+												size="small"
+											>
+												<SysIcon name="edit" fontSize="small" />
+											</IconButton>
+											<IconButton
+												edge="end"
+												aria-label="Excluir tarefa"
+												onClick={(e) => {
+													e.stopPropagation();
+													controller.onDeleteTask(task);
+												}}
+												size="small"
+												disabled={controller.actionLoadingId === task._id}
+											>
+												<SysIcon name="delete" fontSize="small" />
+											</IconButton>
+										</Stack>
+									}
+									disablePadding
+									alignItems="flex-start"
+								>
+									<ListItemIcon sx={{ minWidth: 48 }}>
+										<Checkbox
+											edge="start"
+											checked={task.status === 'completed'}
+											onClick={(e) => {
+												e.stopPropagation();
+												controller.onToggleStatus(task);
+											}}
+											disabled={controller.actionLoadingId === task._id}
+											inputProps={{ 'aria-label': `Marcar tarefa ${task.description || task.title} como concluída` }}
+										/>
+									</ListItemIcon>
+									<ListItemButton onClick={() => controller.onOpenTask(task)} sx={{ py: 1.5 }}>
+										<Avatar sx={{ bgcolor: '#E0E0E0', color: '#333333', mr: 2 }}>
+											<SysIcon name="assignmentTurnedIn" />
+										</Avatar>
+										<ListItemText
+											primary={
+												<Typography
+													variant="subtitle1"
+													sx={{
+														fontWeight: 600,
+														color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
+														textDecoration: task.status === 'completed' ? 'line-through' : 'none'
+													}}
+												>
+													{task.description || task.title || 'Sem descrição'}
+												</Typography>
+											}
+											secondary={
+												<Typography variant="body2" color="text.secondary">
+													{renderSecondaryText(task.createdBy)}
+												</Typography>
+											}
+										/>
+									</ListItemButton>
+								</ListItem>
+								{idx < controller.tasks.length - 1 && <Divider component="li" />}
+							</React.Fragment>
+						))}
+					</List>
+				)}
+			</ListContainer>
+
+			<Dialog
+				open={controller.isModalOpen && !!controller.selectedTask}
+				onClose={controller.onCloseModal}
+				fullWidth
+				maxWidth="sm"
+			>
+				<DialogTitle>Detalhes da tarefa</DialogTitle>
+				<DialogContent dividers>
+					<Typography variant="h6" gutterBottom>
+						{controller.selectedTask?.description || controller.selectedTask?.title}
+					</Typography>
+					<Stack direction="row" spacing={1} alignItems="center" mb={2}>
+						{controller.selectedTask && renderStatusChip(controller.selectedTask.status)}
+					</Stack>
+					<Typography variant="body2" color="text.secondary" gutterBottom>
+						{renderSecondaryText(controller.selectedTask?.createdBy)}
+					</Typography>
+					{controller.selectedTask?.assignedTo && (
+						<Typography variant="body2" color="text.secondary">
+							Atribuída para: {controller.selectedTask.assignedTo}
+						</Typography>
+					)}
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={controller.onCloseModal}>Fechar</Button>
+					<Button
+						startIcon={<SysIcon name="edit" />}
+						onClick={() => controller.selectedTask && controller.onEditTask(controller.selectedTask)}
+					>
+						Editar
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</Container>
 	);
 };

@@ -46,23 +46,24 @@ const TasksDetailController = () => {
 
 	const onSubmit = useCallback((doc: ITask) => {
 		const selectedAction = state === 'create' ? 'insert' : 'update';
-		tasksApi[selectedAction](doc, (e: IMeteorError) => {
-			if (!e) {
-				closePage();
-				showNotification({
-					type: 'success',
-					title: 'Operação realizada!',
-					message: `A tarefa foi ${selectedAction === 'update' ? 'atualizada' : 'cadastrada'} com sucesso!`
-				});
-			} else {
+		tasksApi[selectedAction](doc, (e: IMeteorError, r: any) => {
+			if (e) {
 				showNotification({
 					type: 'error',
 					title: 'Operação não realizada!',
-					message: `Erro ao realizar a operação: ${e.reason}`
+					message: e.reason || 'Erro ao realizar a operação'
 				});
+				return;
 			}
+
+			closePage();
+			showNotification({
+				type: 'success',
+				title: 'Operação realizada!',
+				message: (r && (r.message || r.reason)) || `A tarefa foi ${selectedAction === 'update' ? 'atualizada' : 'cadastrada'} com sucesso!`
+			});
 		});
-	}, []);
+	}, [state, closePage, showNotification]);
 
 	return (
 		<TasksDetailControllerContext.Provider
