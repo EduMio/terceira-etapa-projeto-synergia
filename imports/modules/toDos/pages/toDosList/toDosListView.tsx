@@ -118,10 +118,6 @@ const TasksListView = () => {
 				<Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>
 					ToDo List
 				</Typography>
-				<Stack direction="row" spacing={1} alignItems="center">
-					{renderStatusChip('pending')}
-					{renderStatusChip('completed')}
-				</Stack>
 			</HeaderRow>
 
 			<ListContainer>
@@ -196,13 +192,20 @@ const TasksListView = () => {
 														textDecoration: task.status === 'completed' ? 'line-through' : 'none'
 													}}
 												>
-													{task.description || task.title || 'Sem descrição'}
+													{task.title || 'Sem título'}
 												</Typography>
 											}
 											secondary={
-												<Typography variant="body2" color="text.secondary">
-													{renderSecondaryText(task.createdBy)}
-												</Typography>
+												<Stack spacing={0.5}>
+													<Typography variant="body2" color="text.secondary">
+														{renderSecondaryText(task.createdBy)}
+													</Typography>
+													{task.description && (
+														<Typography variant="body2" color="text.secondary">
+															{task.description}
+														</Typography>
+													)}
+												</Stack>
 											}
 										/>
 									</ListItemButton>
@@ -217,13 +220,19 @@ const TasksListView = () => {
 			<Dialog
 				open={controller.isModalOpen && !!controller.selectedTask}
 				onClose={controller.onCloseModal}
-				fullWidth
-				maxWidth="sm"
+				maxWidth="xs"
+				fullWidth={false}
+				PaperProps={{
+					sx: { width: '100%', maxWidth: 440, borderRadius: 3 }
+				}}
 			>
 				<DialogTitle>Detalhes da tarefa</DialogTitle>
 				<DialogContent dividers>
 					<Typography variant="h6" gutterBottom>
-						{controller.selectedTask?.description || controller.selectedTask?.title}
+						{controller.selectedTask?.title}
+					</Typography>
+					<Typography variant="body1" gutterBottom>
+						{controller.selectedTask?.description}
 					</Typography>
 					<Stack direction="row" spacing={1} alignItems="center" mb={2}>
 						{controller.selectedTask && renderStatusChip(controller.selectedTask.status)}

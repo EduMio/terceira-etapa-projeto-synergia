@@ -1,15 +1,30 @@
 // File: imports/sysPages/pages/home/home.tsx
-import React, { useMemo, useRef } from 'react';
+import React from 'react';
+import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Avatar from '@mui/material/Avatar';
+import Checkbox from '@mui/material/Checkbox';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
+import Divider from '@mui/material/Divider';
+import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import SysIcon from '/imports/ui/components/sysIcon/sysIcon';
 import { styled } from '@mui/material/styles';
 import { tasksApi } from '/imports/modules/toDos/api/toDosApi';
 import { ITask } from '/imports/modules/toDos/api/toDosSch';
-import SysMenu, { ISysMenuItem, ISysMenuRef } from '/imports/ui/components/sysMenu/sysMenuProvider';
 
 // Styled components for the home page
 const Container = styled(Box)(({ theme }) => ({
@@ -34,86 +49,23 @@ const WelcomeSection = styled(Box)(({ theme }) => ({
   textAlign: 'left'
 }));
 
-const TaskSection = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  marginTop: theme.spacing(4),
+const ListContainer = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+  border: `1px solid ${theme.palette.divider}`,
+  width: '100%'
 }));
 
-const TaskSectionHeader = styled(Box)(({ theme }) => ({
+const HeaderRow = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'row',
   justifyContent: 'space-between',
   alignItems: 'center',
   gap: theme.spacing(2),
   flexWrap: 'wrap',
+  marginTop: theme.spacing(4),
   marginBottom: theme.spacing(2)
-}));
-
-const TaskItem = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  padding: theme.spacing(1.5, 0),
-  marginBottom: theme.spacing(0.5),
-  borderBottom: `1px solid ${theme.palette.grey[200]}`,
-}));
-
-const TaskCheckbox = styled('div', {
-  shouldForwardProp: (prop) => prop !== 'completed'
-})<{ completed: boolean }>(({ theme, completed }) => ({
-  width: 24,
-  height: 24,
-  borderRadius: '50%',
-  border: `2px solid ${theme.palette.grey[300]}`,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0,
-  backgroundColor: completed ? theme.palette.success.main : theme.palette.common.white,
-  '&:before': {
-    content: completed ? '"✔"' : '""',
-    color: completed ? theme.palette.common.white : 'transparent',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-}));
-
-const TaskInfo = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  flexGrow: 1,
-  marginLeft: theme.spacing(1),
-}));
-
-const TaskTitle = styled(Typography)(({ theme }) => ({
-  fontSize: 18,
-  fontWeight: 'bold',
-  color: theme.palette.text.primary,
-}));
-
-const TaskCreator = styled(Typography)(({ theme }) => ({
-  fontSize: 14,
-  color: theme.palette.text.secondary,
-  marginTop: theme.spacing(0.5),
-}));
-
-const TaskMeta = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: theme.spacing(1),
-  flexWrap: 'wrap',
-  marginTop: theme.spacing(0.5),
-}));
-
-const ActionsButton = styled(Button)(({ theme }) => ({
-  minWidth: 'auto',
-  padding: theme.spacing(0.5),
-  marginLeft: theme.spacing(1),
-  color: '#666666',
-  '&:hover': {
-    backgroundColor: '#F0F0F0',
-  },
 }));
 
 const FooterSection = styled(Box)(({ theme }) => ({
@@ -148,12 +100,12 @@ const PaginationButton = styled(Button)(({ theme }) => ({
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const menuRef = useRef<ISysMenuRef>(null);
-  const [selectedTask, setSelectedTask] = React.useState<ITask | null>(null);
   
   const currentUser = useTracker(() => {
     return Meteor.user();
   }, []);
+  const [selectedTask, setSelectedTask] = React.useState<ITask | null>(null);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
   
   const username = currentUser?.profile?.name || currentUser?.username || currentUser?.emails?.[0]?.address || 'Usuário';
   const firstName = username?.split(' ')?.[0] || username;
@@ -176,31 +128,26 @@ const HomePage: React.FC = () => {
     navigate('/tasks');
   };
 
-  const handleAddTask = () => {
-    navigate('/tasks/create');
+  const renderSecondaryText = (taskCreatedBy?: string) =>
+    `Criada por: ${taskCreatedBy === Meteor.userId() ? 'Você' : (taskCreatedBy || 'N/A')}`;
+
+  const renderStatusChip = (status: string) => (
+    <Chip
+      size="small"
+      label={status === 'completed' ? 'Concluída' : 'Não concluída'}
+      color={status === 'completed' ? 'success' : 'default'}
+      variant={status === 'completed' ? 'filled' : 'outlined'}
+    />
+  );
+
+  const handleOpenTask = (task: ITask) => {
+    setSelectedTask(task);
+    setIsModalOpen(true);
   };
 
-  const taskMenuOptions: ISysMenuItem[] = useMemo(() => [
-    {
-      key: 'edit',
-      onClick: () => selectedTask && navigate(`/tasks/edit/${selectedTask._id}`),
-      otherProps: { children: 'Editar' }
-    },
-    {
-      key: 'delete',
-      onClick: () => selectedTask && console.log('Delete task', selectedTask._id),
-      otherProps: { children: 'Excluir' }
-    },
-    {
-      key: 'share',
-      onClick: () => selectedTask && console.log('Share task', selectedTask._id),
-      otherProps: { children: 'Compartilhar' }
-    }
-  ], [navigate, selectedTask]);
-
-  const handleOpenTaskMenu = (event: React.MouseEvent<HTMLElement>, task: ITask) => {
-    setSelectedTask(task);
-    menuRef.current?.openMenu(event);
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTask(null);
   };
   
   return (
@@ -212,45 +159,110 @@ const HomePage: React.FC = () => {
         </Typography>
       </WelcomeSection>
       
-      <TaskSection>
-        <TaskSectionHeader>
-          <Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>Atividades recentes</Typography>
-        </TaskSectionHeader>
-        
+      <HeaderRow>
+        <Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>Atividades recentes</Typography>
+      </HeaderRow>
+
+      <ListContainer>
         {loading ? (
-          <Typography variant="body1">Loading tasks...</Typography>
+          <Box display="flex" alignItems="center" justifyContent="center" py={4} gap={2}>
+            <CircularProgress size={24} />
+            <Typography variant="body1">Carregando tarefas...</Typography>
+          </Box>
         ) : recentTasks.length === 0 ? (
-          <Typography variant="body1">No tasks found</Typography>
+          <Box display="flex" alignItems="center" justifyContent="center" py={4}>
+            <Typography variant="body1">Tarefas não encontradas</Typography>
+          </Box>
         ) : (
-          recentTasks.map((task) => (
-            <TaskItem key={task._id}>
-              <TaskCheckbox
-                completed={task.status === 'completed'}
-                aria-label={`Checkbox para tarefa ${task.title}`}
-              />
-              <TaskInfo>
-                <TaskTitle>{task.title}</TaskTitle>
-                <TaskMeta>
-                  <TaskCreator
-                    component="span"
-                    sx={{
-                      color: task.createdBy === Meteor.userId() ? '#333333' : '#888888'
-                    }}
-                  >
-                    Criada por: {task.createdBy === Meteor.userId() ? 'Você' : (task.createdBy || 'N/A')}
-                  </TaskCreator>
-                </TaskMeta>
-              </TaskInfo>
-              <ActionsButton
-                aria-label="Menu de ações"
-                onClick={(event) => handleOpenTaskMenu(event, task)}
-              >
-                <SysIcon name="moreVert" />
-              </ActionsButton>
-            </TaskItem>
-          ))
+          <List disablePadding>
+            {recentTasks.map((task, idx) => (
+              <React.Fragment key={task._id || idx}>
+                <ListItem
+                  secondaryAction={
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      {renderStatusChip(task.status)}
+                    </Stack>
+                  }
+                  disablePadding
+                  alignItems="flex-start"
+                >
+                  <ListItemIcon sx={{ minWidth: 48 }}>
+                    <Checkbox
+                      edge="start"
+                      checked={task.status === 'completed'}
+                      disabled
+                      inputProps={{ 'aria-label': `Status da tarefa ${task.title}` }}
+                    />
+                  </ListItemIcon>
+                  <ListItemButton onClick={() => handleOpenTask(task)} sx={{ py: 1.5 }}>
+                    <Avatar sx={{ bgcolor: '#E0E0E0', color: '#333333', mr: 2 }}>
+                      <SysIcon name="assignmentTurnedIn" />
+                    </Avatar>
+                    <ListItemText
+                      primary={
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
+                            fontWeight: 600,
+                            color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
+                            textDecoration: task.status === 'completed' ? 'line-through' : 'none'
+                          }}
+                        >
+                          {task.title || 'Sem título'}
+                        </Typography>
+                      }
+                      secondary={
+                        <Stack spacing={0.5}>
+                          <Typography variant="body2" color="text.secondary">
+                            {renderSecondaryText(task.createdBy)}
+                          </Typography>
+                          {task.description && (
+                            <Typography variant="body2" color="text.secondary">
+                              {task.description}
+                            </Typography>
+                          )}
+                        </Stack>
+                      }
+                    />
+                  </ListItemButton>
+                </ListItem>
+                {idx < recentTasks.length - 1 && <Divider component="li" />}
+              </React.Fragment>
+            ))}
+          </List>
         )}
-      </TaskSection>
+      </ListContainer>
+
+      <Dialog
+        open={isModalOpen && !!selectedTask}
+        onClose={handleCloseModal}
+        maxWidth="xs"
+        fullWidth={false}
+        PaperProps={{
+          sx: { width: '100%', maxWidth: 440, borderRadius: 3 }
+        }}
+      >
+        <DialogTitle>Detalhes da tarefa</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="h6" gutterBottom>
+            {selectedTask?.description || selectedTask?.title}
+          </Typography>
+          <Stack direction="row" spacing={1} alignItems="center" mb={2}>
+            {selectedTask && renderStatusChip(selectedTask.status)}
+          </Stack>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            {renderSecondaryText(selectedTask?.createdBy)}
+          </Typography>
+          {selectedTask?.assignedTo && (
+            <Typography variant="body2" color="text.secondary">
+              Atribuída para: {selectedTask.assignedTo}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseModal}>Fechar</Button>
+        </DialogActions>
+      </Dialog>
       
       <FooterSection>
         <Button
@@ -277,21 +289,8 @@ const HomePage: React.FC = () => {
           <SysIcon name="doubleArrow" sx={{ ml: 1 }} />
         </Button>
 
-        <PaginationContainer aria-label="Paginação de atividades recentes">
-          <PaginationButton aria-label="Página anterior">
-            {'<'}
-          </PaginationButton>
-          <PaginationButton aria-label="Próxima página">
-            {'>'}
-          </PaginationButton>
-        </PaginationContainer>
       </FooterSection>
 
-      <SysMenu
-        ref={menuRef}
-        options={taskMenuOptions}
-        MenuListProps={{ 'aria-label': 'Opções da tarefa selecionada' }}
-      />
     </Container>
   );
 };

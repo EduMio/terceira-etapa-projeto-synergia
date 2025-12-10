@@ -19,6 +19,7 @@ class TasksServerApi extends ProductServerBase<ITask> {
 				limit: 5,
 				projection: {
 					title: 1,
+					description: 1,
 					createdAt: 1,
 					updatedAt: 1,
 					createdBy: 1,

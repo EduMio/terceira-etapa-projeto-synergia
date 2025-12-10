@@ -67,7 +67,7 @@ const TasksListController = () => {
 		if (!task?._id) return;
 		const newStatus = task.status === 'completed' ? 'pending' : 'completed';
 		setActionLoadingId(task._id);
-		tasksApi.update({ _id: task._id, status: newStatus }, (e: IMeteorError, r: any) => {
+		tasksApi.update({ _id: task._id, status: newStatus, title: task.title, description: task.description }, (e: IMeteorError, r: any) => {
 			setActionLoadingId(null);
 			if (e) {
 				showNotification({
