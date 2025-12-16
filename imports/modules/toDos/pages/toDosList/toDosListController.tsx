@@ -50,8 +50,16 @@ const TasksListController = () => {
 
 	const onEditTask = useCallback((task: ITask) => {
 		if (!task?._id) return;
+		if (task.createdBy && task.createdBy !== Meteor.userId()) {
+			showNotification({
+				type: 'error',
+				title: 'Permissão negada',
+				message: 'Somente o criador pode editar esta tarefa.'
+			});
+			return;
+		}
 		navigate(`/tasks/edit/${task._id}`);
-	}, [navigate]);
+	}, [navigate, showNotification]);
 
 	const onOpenTask = useCallback((task: ITask) => {
 		setSelectedTask(task);
@@ -87,6 +95,14 @@ const TasksListController = () => {
 
 	const onDeleteTask = useCallback((task: ITask) => {
 		if (!task?._id) return;
+		if (task.createdBy && task.createdBy !== Meteor.userId()) {
+			showNotification({
+				type: 'error',
+				title: 'Permissão negada',
+				message: 'Somente o criador pode remover esta tarefa.'
+			});
+			return;
+		}
 		if (selectedTask?._id === task._id) {
 			setIsModalOpen(false);
 			setSelectedTask(null);

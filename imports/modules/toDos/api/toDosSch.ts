@@ -47,6 +47,12 @@ export const tasksSch: ISchema<ITask> = {
 		label: 'Atribuído para',
 		defaultValue: '',
 		optional: true
+	},
+	personal: {
+		type: Boolean,
+		label: 'Pessoal',
+		defaultValue: false,
+		optional: true
 	}
 };
 
@@ -58,4 +64,5 @@ export interface ITask extends IDoc {
 	createdBy?: string;
 	status: 'pending' | 'completed';
 	assignedTo?: string;
+	personal?: boolean;
 }

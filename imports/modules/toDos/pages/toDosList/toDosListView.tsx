@@ -71,7 +71,7 @@ const TasksListView = () => {
 	const firstName = username?.split(' ')?.[0] || username;
 
 	const renderSecondaryText = (taskCreatedBy?: string) =>
-		`Criada por: ${taskCreatedBy === Meteor.userId() ? 'Você' : (taskCreatedBy || 'N/A')}`;
+		`Criada por: ${taskCreatedBy === Meteor.userId() ? 'Você' : (username || 'N/A')}`;
 
 	const renderStatusChip = (status: string) => (
 		<Chip
@@ -138,29 +138,33 @@ const TasksListView = () => {
 									secondaryAction={
 										<Stack direction="row" spacing={1} alignItems="center">
 											{renderStatusChip(task.status)}
-											<IconButton
-												edge="end"
-												aria-label="Editar tarefa"
-												onClick={(e) => {
-													e.stopPropagation();
-													controller.onEditTask(task);
-												}}
-												size="small"
-											>
-												<SysIcon name="edit" fontSize="small" />
-											</IconButton>
-											<IconButton
-												edge="end"
-												aria-label="Excluir tarefa"
-												onClick={(e) => {
-													e.stopPropagation();
-													controller.onDeleteTask(task);
-												}}
-												size="small"
-												disabled={controller.actionLoadingId === task._id}
-											>
-												<SysIcon name="delete" fontSize="small" />
-											</IconButton>
+											{task.createdBy === Meteor.userId() && (
+												<>
+													<IconButton
+														edge="end"
+														aria-label="Editar tarefa"
+														onClick={(e) => {
+															e.stopPropagation();
+															controller.onEditTask(task);
+														}}
+														size="small"
+													>
+														<SysIcon name="edit" fontSize="small" />
+													</IconButton>
+													<IconButton
+														edge="end"
+														aria-label="Excluir tarefa"
+														onClick={(e) => {
+															e.stopPropagation();
+															controller.onDeleteTask(task);
+														}}
+														size="small"
+														disabled={controller.actionLoadingId === task._id}
+													>
+														<SysIcon name="delete" fontSize="small" />
+													</IconButton>
+												</>
+											)}
 										</Stack>
 									}
 									disablePadding
@@ -248,12 +252,14 @@ const TasksListView = () => {
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={controller.onCloseModal}>Fechar</Button>
-					<Button
-						startIcon={<SysIcon name="edit" />}
-						onClick={() => controller.selectedTask && controller.onEditTask(controller.selectedTask)}
-					>
-						Editar
-					</Button>
+					{controller.selectedTask?.createdBy === Meteor.userId() && (
+						<Button
+							startIcon={<SysIcon name="edit" />}
+							onClick={() => controller.selectedTask && controller.onEditTask(controller.selectedTask)}
+						>
+							Editar
+						</Button>
+					)}
 				</DialogActions>
 			</Dialog>
 		</Container>

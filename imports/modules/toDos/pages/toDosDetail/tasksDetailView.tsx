@@ -10,6 +10,7 @@ import SysForm from '../../../../ui/components/sysForm/sysForm';
 import SysTextField from '../../../../ui/components/sysFormFields/sysTextField/sysTextField';
 import { SysSelectField } from '../../../../ui/components/sysFormFields/sysSelectField/sysSelectField';
 import SysFormButton from '../../../../ui/components/sysFormFields/sysFormButton/sysFormButton';
+import SysSwitch from '../../../../ui/components/sysFormFields/sysSwitch/sysSwitch';
 import { styled } from '@mui/material/styles';
 
 const Container = styled(Box)(({ theme }) => ({
@@ -109,6 +110,7 @@ const TasksDetailView = () => {
 					<FormColumn>
 						<SysSelectField name="status" placeholder="Selecionar status" />
 						<SysTextField name="assignedTo" placeholder="Atribuído para" />
+						<SysSwitch name="personal" label="Tarefa pessoal?" valueLabel="Pessoal" />
 					</FormColumn>
 				</Body>
 				<Footer>

@@ -8,6 +8,7 @@ import { ITask } from '../../api/toDosSch';
 import { ISchema } from '../../../../typings/ISchema';
 import { IMeteorError } from '../../../../typings/BoilerplateDefaultTypings';
 import AppLayoutContext, { IAppLayoutContext } from '/imports/app/appLayoutProvider/appLayoutContext';
+import { Meteor } from 'meteor/meteor';
 
 interface ITasksDetailContollerContext {
 	closePage: () => void;
@@ -41,8 +42,16 @@ const TasksDetailController = () => {
 	}, []);
 	
 	const changeToEdit = useCallback((id: string) => {
+		if (document?.createdBy && document.createdBy !== Meteor.userId()) {
+			showNotification({
+				type: 'error',
+				title: 'Permissão negada',
+				message: 'Somente o criador pode editar esta tarefa.'
+			});
+			return;
+		}
 		navigate(`/tasks/edit/${id}`);
-	}, []);
+	}, [document?.createdBy, navigate, showNotification]);
 
 	const onSubmit = useCallback((doc: ITask) => {
 		const selectedAction = state === 'create' ? 'insert' : 'update';
