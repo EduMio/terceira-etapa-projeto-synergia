@@ -73,6 +73,15 @@ const TasksListView = () => {
 	const username = currentUser?.profile?.name || currentUser?.username || currentUser?.emails?.[0]?.address || 'Usuário';
 	const firstName = username?.split(' ')?.[0] || username;
 
+	const getTaskIconProps = (task: ITask) => {
+		const isCompleted = task.status === 'completed';
+		return {
+			name: isCompleted ? 'taskAlt' : 'assignment',
+			bgcolor: isCompleted ? '#E6F4EA' : '#E3F2FD',
+			color: isCompleted ? '#1B5E20' : '#0D47A1'
+		};
+	};
+
 	const renderSecondaryText = (task?: ITask) => {
 		const createdByLabel =
 			task?.createdBy === Meteor.userId()
@@ -159,8 +168,10 @@ const TasksListView = () => {
 					</Box>
 				) : (
 					<List disablePadding>
-						{controller.tasks.map((task, idx) => (
-							<React.Fragment key={task._id || idx}>
+						{controller.tasks.map((task, idx) => {
+							const iconProps = getTaskIconProps(task);
+							return (
+								<React.Fragment key={task._id || idx}>
 								<ListItem
 									secondaryAction={
 										<Stack direction="row" spacing={1} alignItems="center">
@@ -210,8 +221,13 @@ const TasksListView = () => {
 										/>
 									</ListItemIcon>
 									<ListItemButton onClick={() => controller.onOpenTask(task)} sx={{ py: 1.5 }}>
-										<Avatar sx={{ bgcolor: '#E0E0E0', color: '#333333', mr: 2 }}>
-											<SysIcon name="assignmentTurnedIn" />
+										<Avatar
+											sx={{
+												bgcolor: iconProps.bgcolor,
+												color: iconProps.color,
+												mr: 2
+											}}>
+											<SysIcon name={iconProps.name} />
 										</Avatar>
 										<ListItemText
 											primary={
