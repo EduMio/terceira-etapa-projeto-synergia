@@ -31,6 +31,7 @@ class TasksServerApi extends ProductServerBase<ITask> {
 					createdAt: 1,
 					updatedAt: 1,
 					createdBy: 1,
+					createdByName: 1,
 					status: 1,
 					assignedTo: 1
 				}
@@ -59,6 +60,7 @@ class TasksServerApi extends ProductServerBase<ITask> {
 					createdAt: 1,
 					updatedAt: 1,
 					createdBy: 1,
+					createdByName: 1,
 					status: 1,
 					assignedTo: 1,
 					personal: 1
@@ -72,6 +74,11 @@ class TasksServerApi extends ProductServerBase<ITask> {
 		return user?._id || user?.id || user?.userId || 'Sistema';
 	}
 
+	private resolveUserName(context: IContext): string {
+		const user = context?.user as any;
+		return user?.username || user?.profile?.name || user?.email || 'Usuário';
+	}
+
 	async beforeInsert(doc: Partial<ITask>, context: IContext) {
 		await super.beforeInsert(doc, context);
 		const now = new Date();
@@ -79,6 +86,7 @@ class TasksServerApi extends ProductServerBase<ITask> {
 		doc.updatedAt = now;
 		doc.status = doc.status || 'pending';
 		doc.createdBy = doc.createdBy || this.resolveUserId(context);
+		doc.createdByName = doc.createdByName || this.resolveUserName(context);
 		doc.personal = doc.personal ?? false;
 		return true;
 	}
@@ -89,6 +97,9 @@ class TasksServerApi extends ProductServerBase<ITask> {
 		const existing = await this.getCollectionInstance().findOneAsync({ _id: doc._id });
 		if (existing && existing.createdBy && existing.createdBy !== userId) {
 			throw new Meteor.Error('not-authorized', 'Somente o criador pode alterar esta tarefa');
+		}
+		if (existing) {
+			doc.createdByName = existing.createdByName || this.resolveUserName(context);
 		}
 		doc.updatedAt = new Date();
 		return true;

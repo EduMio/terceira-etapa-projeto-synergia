@@ -20,6 +20,9 @@ import DialogActions from '@mui/material/DialogActions';
 import Divider from '@mui/material/Divider';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
+import { ITask } from '../../api/toDosSch';
 import SysIcon from '../../../../ui/components/sysIcon/sysIcon';
 import { styled } from '@mui/material/styles';
 import { TasksListControllerContext } from './toDosListController';
@@ -70,8 +73,13 @@ const TasksListView = () => {
 	const username = currentUser?.profile?.name || currentUser?.username || currentUser?.emails?.[0]?.address || 'Usuário';
 	const firstName = username?.split(' ')?.[0] || username;
 
-	const renderSecondaryText = (taskCreatedBy?: string) =>
-		`Criada por: ${taskCreatedBy === Meteor.userId() ? 'Você' : (username || 'N/A')}`;
+	const renderSecondaryText = (task?: ITask) => {
+		const createdByLabel =
+			task?.createdBy === Meteor.userId()
+				? 'Você'
+				: task?.createdByName || task?.createdBy || 'N/A';
+		return `Criada por: ${createdByLabel}`;
+	};
 
 	const renderStatusChip = (status: string) => (
 		<Chip
@@ -118,6 +126,25 @@ const TasksListView = () => {
 				<Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>
 					ToDo List
 				</Typography>
+				<TextField
+					placeholder="Buscar na descrição"
+					value={controller.searchTerm}
+					onChange={(e) => controller.onSearchChange(e.target.value)}
+					size="small"
+					InputProps={{
+						startAdornment: (
+							<InputAdornment position="start">
+								<SysIcon name="search" fontSize="small" />
+							</InputAdornment>
+						)
+					}}
+					sx={{
+						minWidth: 240,
+						maxWidth: 360,
+						flex: '1 1 240px',
+						backgroundColor: '#fafafa'
+					}}
+				/>
 			</HeaderRow>
 
 			<ListContainer>
@@ -202,7 +229,7 @@ const TasksListView = () => {
 											secondary={
 												<Stack spacing={0.5}>
 													<Typography variant="body2" color="text.secondary">
-														{renderSecondaryText(task.createdBy)}
+														{renderSecondaryText(task)}
 													</Typography>
 													{task.description && (
 														<Typography variant="body2" color="text.secondary">
@@ -242,7 +269,7 @@ const TasksListView = () => {
 						{controller.selectedTask && renderStatusChip(controller.selectedTask.status)}
 					</Stack>
 					<Typography variant="body2" color="text.secondary" gutterBottom>
-						{renderSecondaryText(controller.selectedTask?.createdBy)}
+						{renderSecondaryText(controller.selectedTask)}
 					</Typography>
 					{controller.selectedTask?.assignedTo && (
 						<Typography variant="body2" color="text.secondary">

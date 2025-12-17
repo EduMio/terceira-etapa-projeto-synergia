@@ -32,6 +32,12 @@ export const tasksSch: ISchema<ITask> = {
 		defaultValue: '',
 		optional: true
 	},
+	createdByName: {
+		type: String,
+		label: 'Nome do criador',
+		defaultValue: '',
+		optional: true
+	},
 	status: {
 		type: String,
 		label: 'Status',
@@ -62,6 +68,7 @@ export interface ITask extends IDoc {
 	createdAt?: Date;
 	updatedAt?: Date;
 	createdBy?: string;
+	createdByName?: string;
 	status: 'pending' | 'completed';
 	assignedTo?: string;
 	personal?: boolean;

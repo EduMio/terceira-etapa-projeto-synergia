@@ -14,12 +14,14 @@ interface ITasksListContollerContext {
 	actionLoadingId: string | null;
 	selectedTask: ITask | null;
 	isModalOpen: boolean;
+	searchTerm: string;
 	onAddTaskClick: () => void;
 	onEditTask: (task: ITask) => void;
 	onDeleteTask: (task: ITask) => void;
 	onToggleStatus: (task: ITask) => void;
 	onOpenTask: (task: ITask) => void;
 	onCloseModal: () => void;
+	onSearchChange: (value: string) => void;
 }
 
 export const TasksListControllerContext = React.createContext<ITasksListContollerContext>(
@@ -33,16 +35,21 @@ const TasksListController = () => {
 	const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 	const [selectedTask, setSelectedTask] = useState<ITask | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [searchTerm, setSearchTerm] = useState('');
 	
 	const { loading, tasks } = useTracker(() => {
-		const subHandle = tasksApi.subscribe('tasks.recent', {}, { sort: { updatedAt: -1 }, limit: 100 });
-		
-		const tasks = subHandle?.ready() ? tasksApi.find({}, { sort: { updatedAt: -1 } }).fetch() : [];
+		const normalizedSearch = searchTerm.trim();
+		const filter = normalizedSearch
+			? { title: { $regex: normalizedSearch, $options: 'i' } }
+			: {};
+
+		const subHandle = tasksApi.subscribe('tasks.recent', filter, { sort: { updatedAt: -1 }, limit: 100 });
+		const tasks = subHandle?.ready() ? tasksApi.find(filter, { sort: { updatedAt: -1 } }).fetch() : [];
 		return {
 			tasks,
 			loading: !!subHandle && !subHandle.ready()
 		};
-	}, []);
+	}, [searchTerm]);
 	
 	const onAddTaskClick = useCallback(() => {
 		navigate('/tasks/create');
@@ -125,6 +132,10 @@ const TasksListController = () => {
 			});
 		});
 	}, [showNotification, selectedTask]);
+
+	const onSearchChange = useCallback((value: string) => {
+		setSearchTerm(value);
+	}, []);
 	
 	const providerValues: ITasksListContollerContext = useMemo(
 		() => ({
@@ -133,12 +144,14 @@ const TasksListController = () => {
 			actionLoadingId,
 			selectedTask,
 			isModalOpen,
+			searchTerm,
 			onAddTaskClick,
 			onEditTask,
 			onDeleteTask,
 			onToggleStatus,
 			onOpenTask,
-			onCloseModal
+			onCloseModal,
+			onSearchChange
 		}),
 		[
 			tasks,
@@ -146,12 +159,14 @@ const TasksListController = () => {
 			actionLoadingId,
 			selectedTask,
 			isModalOpen,
+			searchTerm,
 			onAddTaskClick,
 			onEditTask,
 			onDeleteTask,
 			onToggleStatus,
 			onOpenTask,
-			onCloseModal
+			onCloseModal,
+			onSearchChange
 		]
 	);
 	
