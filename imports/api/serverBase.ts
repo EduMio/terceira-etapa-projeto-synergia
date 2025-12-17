@@ -1006,7 +1006,7 @@ export class ServerApiBase<Doc extends IDoc> {
 							},
 							removed: () => {
 								if (loaded) {
-									count--;
+									count = Math.max(0, count - 1);
 									// @ts-ignore
 									this.changed('counts', `${publishName}Total`, { count });
 								}
@@ -1016,7 +1016,7 @@ export class ServerApiBase<Doc extends IDoc> {
 							nonMutatingCallbacks: true
 						}
 					);
-					count = handlePub.countAsync(false);
+					count = await handlePub.countAsync(false);
 					// @ts-ignore
 					this.added('counts', `${publishName}Total`, { count });
 					loaded = true;

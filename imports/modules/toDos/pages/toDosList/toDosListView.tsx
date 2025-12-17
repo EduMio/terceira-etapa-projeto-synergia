@@ -67,11 +67,22 @@ const HeaderRow = styled(Box)(({ theme }) => ({
 	flexWrap: 'wrap'
 }));
 
+const PaginationRow = styled(Box)(({ theme }) => ({
+	display: 'flex',
+	alignItems: 'center',
+	justifyContent: 'flex-end',
+	gap: theme.spacing(1.5),
+	padding: theme.spacing(2),
+	borderTop: `1px solid ${theme.palette.divider}`
+}));
+
 const TasksListView = () => {
 	const controller = useContext(TasksListControllerContext);
 	const currentUser = useTracker(() => Meteor.user(), []);
 	const username = currentUser?.profile?.name || currentUser?.username || currentUser?.emails?.[0]?.address || 'Usuário';
 	const firstName = username?.split(' ')?.[0] || username;
+	const PAGE_SIZE = 4;
+	const totalPages = Math.max(1, Math.ceil((controller.total || 0) / PAGE_SIZE));
 
 	const getTaskIconProps = (task: ITask) => {
 		const isCompleted = task.status === 'completed';
@@ -168,11 +179,11 @@ const TasksListView = () => {
 					</Box>
 				) : (
 					<List disablePadding>
-						{controller.tasks.map((task, idx) => {
-							const iconProps = getTaskIconProps(task);
-							return (
-								<React.Fragment key={task._id || idx}>
-								<ListItem
+				{controller.tasks.map((task, idx) => {
+					const iconProps = getTaskIconProps(task);
+					return (
+						<React.Fragment key={task._id || idx}>
+							<ListItem
 									secondaryAction={
 										<Stack direction="row" spacing={1} alignItems="center">
 											{renderStatusChip(task.status)}
@@ -263,6 +274,30 @@ const TasksListView = () => {
 					</List>
 				)}
 			</ListContainer>
+
+			<PaginationRow>
+				<Button
+					variant="outlined"
+					size="small"
+					startIcon={<SysIcon name="chevronLeft" />}
+					disabled={controller.currentPage === 1 || controller.loading}
+					onClick={() => controller.onPageChange(Math.max(1, controller.currentPage - 1))}
+				>
+					Anterior
+				</Button>
+				<Typography variant="body2">
+					Página {controller.currentPage} de {totalPages}
+				</Typography>
+				<Button
+					variant="outlined"
+					size="small"
+					endIcon={<SysIcon name="chevronRight" />}
+					disabled={controller.loading || controller.currentPage >= totalPages}
+					onClick={() => controller.onPageChange(controller.currentPage + 1)}
+				>
+					Próxima
+				</Button>
+			</PaginationRow>
 
 			<Dialog
 				open={controller.isModalOpen && !!controller.selectedTask}

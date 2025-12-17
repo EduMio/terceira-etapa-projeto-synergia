@@ -1,8 +1,9 @@
 // File: imports/modules/toDos/pages/toDosList/toDosListController.tsx
-import React, { useCallback, useMemo, useState, useContext } from 'react';
+import React, { useCallback, useMemo, useState, useContext, useEffect } from 'react';
 import TasksListView from './toDosListView';
 import { useNavigate } from 'react-router-dom';
 import { useTracker } from 'meteor/react-meteor-data';
+import { Meteor } from 'meteor/meteor';
 import { tasksApi } from '../../api/toDosApi';
 import { ITask } from '../../api/toDosSch';
 import AppLayoutContext, { IAppLayoutContext } from '/imports/app/appLayoutProvider/appLayoutContext';
@@ -15,6 +16,8 @@ interface ITasksListContollerContext {
 	selectedTask: ITask | null;
 	isModalOpen: boolean;
 	searchTerm: string;
+	currentPage: number;
+	total: number;
 	onAddTaskClick: () => void;
 	onEditTask: (task: ITask) => void;
 	onDeleteTask: (task: ITask) => void;
@@ -22,6 +25,7 @@ interface ITasksListContollerContext {
 	onOpenTask: (task: ITask) => void;
 	onCloseModal: () => void;
 	onSearchChange: (value: string) => void;
+	onPageChange: (page: number) => void;
 }
 
 export const TasksListControllerContext = React.createContext<ITasksListContollerContext>(
@@ -32,24 +36,37 @@ const TasksListController = () => {
 	const navigate = useNavigate();
 	const { showNotification } = useContext<IAppLayoutContext>(AppLayoutContext);
 
+	const PAGE_SIZE = 4;
 	const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 	const [selectedTask, setSelectedTask] = useState<ITask | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('');
+	const [currentPage, setCurrentPage] = useState(1);
 	
-	const { loading, tasks } = useTracker(() => {
+	const { loading, tasks, total } = useTracker(() => {
 		const normalizedSearch = searchTerm.trim();
 		const filter = normalizedSearch
-			? { title: { $regex: normalizedSearch, $options: 'i' } }
+			? { description: { $regex: normalizedSearch, $options: 'i' } }
 			: {};
+		const skip = (currentPage - 1) * PAGE_SIZE;
 
-		const subHandle = tasksApi.subscribe('tasks.recent', filter, { sort: { updatedAt: -1 }, limit: 100 });
-		const tasks = subHandle?.ready() ? tasksApi.find(filter, { sort: { updatedAt: -1 } }).fetch() : [];
+		const subHandle = tasksApi.subscribe('tasks.recent', filter, { sort: { updatedAt: -1 }, limit: PAGE_SIZE, skip });
+		const isReady = !!subHandle && subHandle.ready();
+		const tasks = isReady ? tasksApi.find(filter, { sort: { updatedAt: -1 } }).fetch() : [];
+		const countDoc = tasksApi.counts.findOne({ _id: 'tasks.recentTotal' });
 		return {
 			tasks,
-			loading: !!subHandle && !subHandle.ready()
+			loading: !isReady,
+			total: countDoc?.count ?? 0
 		};
-	}, [searchTerm]);
+	}, [searchTerm, currentPage]);
+
+	useEffect(() => {
+		const totalPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
+		if (currentPage > totalPages) {
+			setCurrentPage(totalPages);
+		}
+	}, [total, currentPage]);
 	
 	const onAddTaskClick = useCallback(() => {
 		navigate('/tasks/create');
@@ -135,6 +152,11 @@ const TasksListController = () => {
 
 	const onSearchChange = useCallback((value: string) => {
 		setSearchTerm(value);
+		setCurrentPage(1);
+	}, []);
+
+	const onPageChange = useCallback((page: number) => {
+		setCurrentPage(page);
 	}, []);
 	
 	const providerValues: ITasksListContollerContext = useMemo(
@@ -145,13 +167,16 @@ const TasksListController = () => {
 			selectedTask,
 			isModalOpen,
 			searchTerm,
+			currentPage,
+			total,
 			onAddTaskClick,
 			onEditTask,
 			onDeleteTask,
 			onToggleStatus,
 			onOpenTask,
 			onCloseModal,
-			onSearchChange
+			onSearchChange,
+			onPageChange
 		}),
 		[
 			tasks,
@@ -160,13 +185,16 @@ const TasksListController = () => {
 			selectedTask,
 			isModalOpen,
 			searchTerm,
+			currentPage,
+			total,
 			onAddTaskClick,
 			onEditTask,
 			onDeleteTask,
 			onToggleStatus,
 			onOpenTask,
 			onCloseModal,
-			onSearchChange
+			onSearchChange,
+			onPageChange
 		]
 	);
 	
