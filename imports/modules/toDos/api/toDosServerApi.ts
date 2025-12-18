@@ -67,6 +67,58 @@ class TasksServerApi extends ProductServerBase<ITask> {
 				}
 			});
 		});
+
+		// Add publication for pending tasks with independent pagination
+		this.addPublication('tasks.pending', function (this: any, filter = {}, options = {}) {
+			const userId = this.userId;
+			const visibilityFilter = {
+				$or: [{ personal: { $ne: true } }, { createdBy: userId || null }]
+			};
+			const finalFilter = { $and: [filter, { status: 'pending' }, visibilityFilter] };
+			const defaultOptions = {
+				sort: { updatedAt: -1 },
+				limit: 5,
+				projection: {
+					title: 1,
+					description: 1,
+					createdAt: 1,
+					updatedAt: 1,
+					createdBy: 1,
+					createdByName: 1,
+					status: 1,
+					assignedTo: 1
+				}
+			};
+			const finalOptions = { ...defaultOptions, ...options };
+
+			return self.defaultListCollectionPublication(finalFilter, finalOptions);
+		});
+
+		// Add publication for completed tasks with independent pagination
+		this.addPublication('tasks.completed', function (this: any, filter = {}, options = {}) {
+			const userId = this.userId;
+			const visibilityFilter = {
+				$or: [{ personal: { $ne: true } }, { createdBy: userId || null }]
+			};
+			const finalFilter = { $and: [filter, { status: 'completed' }, visibilityFilter] };
+			const defaultOptions = {
+				sort: { updatedAt: -1 },
+				limit: 5,
+				projection: {
+					title: 1,
+					description: 1,
+					createdAt: 1,
+					updatedAt: 1,
+					createdBy: 1,
+					createdByName: 1,
+					status: 1,
+					assignedTo: 1
+				}
+			};
+			const finalOptions = { ...defaultOptions, ...options };
+
+			return self.defaultListCollectionPublication(finalFilter, finalOptions);
+		});
 	}
 
 	private resolveUserId(context: IContext): string {

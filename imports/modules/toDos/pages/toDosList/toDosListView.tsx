@@ -27,9 +27,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { styled } from '@mui/material/styles';
 import { ITask } from '../../api/toDosSch';
 import SysIcon from '../../../../ui/components/sysIcon/sysIcon';
-import { styled } from '@mui/material/styles';
 import { TasksListControllerContext } from './toDosListController';
 
 const Container = styled(Box)(({ theme }) => ({
@@ -98,7 +98,6 @@ const TasksListView = () => {
 	const username = currentUser?.profile?.name || currentUser?.username || currentUser?.emails?.[0]?.address || 'Usuário';
 	const firstName = username?.split(' ')?.[0] || username;
 	const PAGE_SIZE = 4;
-	const totalPages = Math.max(1, Math.ceil((controller.total || 0) / PAGE_SIZE));
 	const navigate = useNavigate();
 	const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 	const [menuTask, setMenuTask] = useState<ITask | null>(null);
@@ -130,6 +129,153 @@ const TasksListView = () => {
 			variant={status === 'completed' ? 'filled' : 'outlined'}
 		/>
 	);
+
+	const renderTaskList = (
+		title: string,
+		tasks: ITask[],
+		loading: boolean,
+		loadingPage: boolean,
+		currentPage: number,
+		total: number,
+		onPageChange: (page: number) => void,
+		emptyMessage: string
+	) => {
+		const totalPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
+
+		return (
+			<Box mb={4}>
+				<Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
+					<Typography variant="h6" sx={{ color: '#444444', fontWeight: 700 }}>
+						{title}
+					</Typography>
+					<Chip size="small" label={`${total || 0} ${total === 1 ? 'tarefa' : 'tarefas'}`} />
+				</Stack>
+
+				<ListContainer>
+					<Box position="relative">
+						{loadingPage && tasks.length > 0 && (
+							<LoadingOverlay>
+								<Stack direction="row" spacing={1} alignItems="center">
+									<CircularProgress size={22} />
+									<Typography variant="body2">Carregando...</Typography>
+								</Stack>
+							</LoadingOverlay>
+						)}
+
+						{loading && tasks.length === 0 ? (
+							<Box display="flex" alignItems="center" justifyContent="center" py={4} gap={2}>
+								<CircularProgress size={24} />
+								<Typography variant="body1">Carregando tarefas...</Typography>
+							</Box>
+						) : tasks.length === 0 ? (
+							<Box display="flex" alignItems="center" justifyContent="center" py={4}>
+								<Typography variant="body1">{emptyMessage}</Typography>
+							</Box>
+						) : (
+							<List disablePadding>
+								{tasks.map((task, idx) => (
+									<React.Fragment key={task._id || idx}>
+										<ListItem
+											sx={{ px: 1.5 }}
+											secondaryAction={
+												<Stack direction="row" spacing={1} alignItems="center">
+													{task.createdBy === Meteor.userId() && (
+														<IconButton
+															edge="end"
+															aria-label="Ações da tarefa"
+															onClick={(e) => openActionsMenu(e, task)}
+															size="small"
+															disabled={controller.actionLoadingId === task._id}
+														>
+															<MoreVertIcon fontSize="small" />
+														</IconButton>
+													)}
+												</Stack>
+											}
+											disablePadding
+											alignItems="flex-start"
+										>
+											<ListItemIcon sx={{ minWidth: 56, justifyContent: 'center' }}>
+												<Checkbox
+													edge="start"
+													checked={task.status === 'completed'}
+													icon={<RadioButtonUncheckedIcon />}
+													checkedIcon={<CheckCircleIcon />}
+													sx={{
+														p: 0.5,
+														'& .MuiSvgIcon-root': { fontSize: 26 }
+													}}
+													onClick={(e) => {
+														e.stopPropagation();
+														controller.onToggleStatus(task);
+													}}
+													disabled={controller.actionLoadingId === task._id}
+													inputProps={{ 'aria-label': `Marcar tarefa ${task.description || task.title} como concluída` }}
+												/>
+											</ListItemIcon>
+											<ListItemButton onClick={() => controller.onOpenTask(task)} sx={{ py: 1.5 }}>
+												<ListItemText
+													primary={
+														<Typography
+															variant="subtitle1"
+															sx={{
+																fontWeight: 600,
+																color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
+																textDecoration: task.status === 'completed' ? 'line-through' : 'none'
+															}}
+														>
+															{task.title || 'Sem título'}
+														</Typography>
+													}
+													secondary={
+														<Stack spacing={0.5}>
+															<Typography variant="body2" color="text.secondary">
+																{renderSecondaryText(task)}
+															</Typography>
+															{task.description && (
+																<Typography variant="body2" color="text.secondary">
+																	{task.description}
+																</Typography>
+															)}
+														</Stack>
+													}
+												/>
+											</ListItemButton>
+										</ListItem>
+										{idx < tasks.length - 1 && <Divider component="li" />}
+									</React.Fragment>
+								))}
+							</List>
+						)}
+					</Box>
+				</ListContainer>
+
+				<PaginationRow>
+					<Button
+						variant="outlined"
+						size="small"
+						startIcon={<SysIcon name="chevronLeft" />}
+						disabled={currentPage === 1 || loadingPage}
+						onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+					>
+						Anterior
+					</Button>
+					<Typography variant="body2">
+						Página {currentPage} de {totalPages}
+					</Typography>
+					<Button
+						variant="outlined"
+						size="small"
+						endIcon={<SysIcon name="chevronRight" />}
+						disabled={loadingPage || currentPage >= totalPages}
+						onClick={() => onPageChange(currentPage + 1)}
+					>
+						Próxima
+					</Button>
+				</PaginationRow>
+			</Box>
+		);
+	};
 	
 	return (
 		<Container>
@@ -199,106 +345,27 @@ const TasksListView = () => {
 				/>
 			</HeaderRow>
 
-			<ListContainer>
-				<Box position="relative">
-					{controller.loadingPage && controller.tasks.length > 0 && (
-						<LoadingOverlay>
-							<Stack direction="row" spacing={1} alignItems="center">
-								<CircularProgress size={22} />
-								<Typography variant="body2">Carregando...</Typography>
-							</Stack>
-						</LoadingOverlay>
-					)}
+			{renderTaskList(
+				'Tarefas pendentes',
+				controller.pendingTasks,
+				controller.loadingPending,
+				controller.loadingPendingPage,
+				controller.pendingPage,
+				controller.pendingTotal,
+				controller.onPendingPageChange,
+				'Nenhuma tarefa pendente'
+			)}
 
-					{controller.loading && controller.tasks.length === 0 ? (
-						<Box display="flex" alignItems="center" justifyContent="center" py={4} gap={2}>
-							<CircularProgress size={24} />
-							<Typography variant="body1">Carregando tarefas...</Typography>
-						</Box>
-					) : controller.tasks.length === 0 ? (
-						<Box display="flex" alignItems="center" justifyContent="center" py={4}>
-							<Typography variant="body1">Tarefas não encontradas</Typography>
-						</Box>
-					) : (
-						<List disablePadding>
-							{controller.tasks.map((task, idx) => {
-								return (
-									<React.Fragment key={task._id || idx}>
-										<ListItem
-												sx={{ px: 1.5 }}
-												secondaryAction={
-													<Stack direction="row" spacing={1} alignItems="center">
-														{task.createdBy === Meteor.userId() && (
-															<IconButton
-																edge="end"
-																aria-label="Ações da tarefa"
-																onClick={(e) => openActionsMenu(e, task)}
-																size="small"
-																disabled={controller.actionLoadingId === task._id}
-															>
-																<MoreVertIcon fontSize="small" />
-															</IconButton>
-														)}
-													</Stack>
-												}
-												disablePadding
-												alignItems="flex-start"
-											>
-												<ListItemIcon sx={{ minWidth: 56, justifyContent: 'center' }}>
-													<Checkbox
-														edge="start"
-														checked={task.status === 'completed'}
-														icon={<RadioButtonUncheckedIcon />}
-														checkedIcon={<CheckCircleIcon />}
-														sx={{
-															p: 0.5,
-															'& .MuiSvgIcon-root': { fontSize: 26 }
-														}}
-														onClick={(e) => {
-															e.stopPropagation();
-															controller.onToggleStatus(task);
-														}}
-														disabled={controller.actionLoadingId === task._id}
-														inputProps={{ 'aria-label': `Marcar tarefa ${task.description || task.title} como concluída` }}
-													/>
-												</ListItemIcon>
-												<ListItemButton onClick={() => controller.onOpenTask(task)} sx={{ py: 1.5 }}>
-													<ListItemText
-														primary={
-															<Typography
-																variant="subtitle1"
-																sx={{
-																	fontWeight: 600,
-																	color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
-																	textDecoration: task.status === 'completed' ? 'line-through' : 'none'
-																}}
-															>
-																{task.title || 'Sem título'}
-															</Typography>
-														}
-														secondary={
-															<Stack spacing={0.5}>
-																<Typography variant="body2" color="text.secondary">
-																	{renderSecondaryText(task)}
-																</Typography>
-																{task.description && (
-																	<Typography variant="body2" color="text.secondary">
-																		{task.description}
-																	</Typography>
-																)}
-															</Stack>
-														}
-													/>
-												</ListItemButton>
-											</ListItem>
-											{idx < controller.tasks.length - 1 && <Divider component="li" />}
-										</React.Fragment>
-									);
-								})}
-						</List>
-					)}
-				</Box>
-			</ListContainer>
+			{renderTaskList(
+				'Tarefas concluídas',
+				controller.completedTasks,
+				controller.loadingCompleted,
+				controller.loadingCompletedPage,
+				controller.completedPage,
+				controller.completedTotal,
+				controller.onCompletedPageChange,
+				'Nenhuma tarefa concluída'
+			)}
 
 			<Menu
 				anchorEl={menuAnchor}
@@ -325,30 +392,6 @@ const TasksListView = () => {
 					Excluir
 				</MenuItem>
 			</Menu>
-
-			<PaginationRow>
-				<Button
-					variant="outlined"
-					size="small"
-					startIcon={<SysIcon name="chevronLeft" />}
-					disabled={controller.currentPage === 1 || controller.loadingPage}
-					onClick={() => controller.onPageChange(Math.max(1, controller.currentPage - 1))}
-				>
-					Anterior
-				</Button>
-				<Typography variant="body2">
-					Página {controller.currentPage} de {totalPages}
-				</Typography>
-				<Button
-					variant="outlined"
-					size="small"
-					endIcon={<SysIcon name="chevronRight" />}
-					disabled={controller.loadingPage || controller.currentPage >= totalPages}
-					onClick={() => controller.onPageChange(controller.currentPage + 1)}
-				>
-					Próxima
-				</Button>
-			</PaginationRow>
 
 			<Dialog
 				open={controller.isModalOpen && !!controller.selectedTask}

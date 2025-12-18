@@ -10,15 +10,20 @@ import AppLayoutContext, { IAppLayoutContext } from '/imports/app/appLayoutProvi
 import { IMeteorError } from '../../../../typings/IMeteorError';
 
 interface ITasksListContollerContext {
-	tasks: ITask[];
-	loading: boolean;
+	pendingTasks: ITask[];
+	completedTasks: ITask[];
+	loadingPending: boolean;
+	loadingCompleted: boolean;
+	loadingPendingPage: boolean;
+	loadingCompletedPage: boolean;
 	actionLoadingId: string | null;
 	selectedTask: ITask | null;
 	isModalOpen: boolean;
 	searchTerm: string;
-	currentPage: number;
-	total: number;
-	loadingPage: boolean;
+	pendingPage: number;
+	completedPage: number;
+	pendingTotal: number;
+	completedTotal: number;
 	onAddTaskClick: () => void;
 	onEditTask: (task: ITask) => void;
 	onDeleteTask: (task: ITask) => void;
@@ -26,7 +31,8 @@ interface ITasksListContollerContext {
 	onOpenTask: (task: ITask) => void;
 	onCloseModal: () => void;
 	onSearchChange: (value: string) => void;
-	onPageChange: (page: number) => void;
+	onPendingPageChange: (page: number) => void;
+	onCompletedPageChange: (page: number) => void;
 }
 
 export const TasksListControllerContext = React.createContext<ITasksListContollerContext>(
@@ -38,43 +44,76 @@ const TasksListController = () => {
 	const { showNotification } = useContext<IAppLayoutContext>(AppLayoutContext);
 
 	const PAGE_SIZE = 4;
-	const [visibleTasks, setVisibleTasks] = useState<ITask[]>([]);
+	const [visiblePendingTasks, setVisiblePendingTasks] = useState<ITask[]>([]);
+	const [visibleCompletedTasks, setVisibleCompletedTasks] = useState<ITask[]>([]);
 	const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 	const [selectedTask, setSelectedTask] = useState<ITask | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('');
-	const [currentPage, setCurrentPage] = useState(1);
+	const [pendingPage, setPendingPage] = useState(1);
+	const [completedPage, setCompletedPage] = useState(1);
 	
-	const { loading, tasks, total } = useTracker(() => {
+	const { loading: loadingPending, tasks: pendingTasks, total: pendingTotal } = useTracker(() => {
 		const normalizedSearch = searchTerm.trim();
 		const filter = normalizedSearch
-			? { description: { $regex: normalizedSearch, $options: 'i' } }
-			: {};
-		const skip = (currentPage - 1) * PAGE_SIZE;
+			? { description: { $regex: normalizedSearch, $options: 'i' }, status: 'pending' }
+			: { status: 'pending' };
+		const skip = (pendingPage - 1) * PAGE_SIZE;
 
-		const subHandle = tasksApi.subscribe('tasks.recent', filter, { sort: { updatedAt: -1 }, limit: PAGE_SIZE, skip });
+		const subHandle = tasksApi.subscribe('tasks.pending', filter, { sort: { updatedAt: -1 }, limit: PAGE_SIZE, skip });
 		const isReady = !!subHandle && subHandle.ready();
 		const tasks = isReady ? tasksApi.find(filter, { sort: { updatedAt: -1 } }).fetch() : [];
-		const countDoc = tasksApi.counts.findOne({ _id: 'tasks.recentTotal' });
+		const countDoc = tasksApi.counts.findOne({ _id: 'tasks.pendingTotal' });
 		return {
 			tasks,
 			loading: !isReady,
 			total: countDoc?.count ?? 0
 		};
-	}, [searchTerm, currentPage]);
+	}, [searchTerm, pendingPage]);
+
+	const { loading: loadingCompleted, tasks: completedTasks, total: completedTotal } = useTracker(() => {
+		const normalizedSearch = searchTerm.trim();
+		const filter = normalizedSearch
+			? { description: { $regex: normalizedSearch, $options: 'i' }, status: 'completed' }
+			: { status: 'completed' };
+		const skip = (completedPage - 1) * PAGE_SIZE;
+
+		const subHandle = tasksApi.subscribe('tasks.completed', filter, { sort: { updatedAt: -1 }, limit: PAGE_SIZE, skip });
+		const isReady = !!subHandle && subHandle.ready();
+		const tasks = isReady ? tasksApi.find(filter, { sort: { updatedAt: -1 } }).fetch() : [];
+		const countDoc = tasksApi.counts.findOne({ _id: 'tasks.completedTotal' });
+		return {
+			tasks,
+			loading: !isReady,
+			total: countDoc?.count ?? 0
+		};
+	}, [searchTerm, completedPage]);
 
 	useEffect(() => {
-		if (!loading) {
-			setVisibleTasks(tasks);
+		if (!loadingPending) {
+			setVisiblePendingTasks(pendingTasks);
 		}
-	}, [loading, tasks]);
+	}, [loadingPending, pendingTasks]);
 
 	useEffect(() => {
-		const totalPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
-		if (currentPage > totalPages) {
-			setCurrentPage(totalPages);
+		if (!loadingCompleted) {
+			setVisibleCompletedTasks(completedTasks);
 		}
-	}, [total, currentPage]);
+	}, [loadingCompleted, completedTasks]);
+
+	useEffect(() => {
+		const totalPages = Math.max(1, Math.ceil((pendingTotal || 0) / PAGE_SIZE));
+		if (pendingPage > totalPages) {
+			setPendingPage(totalPages);
+		}
+	}, [pendingTotal, pendingPage]);
+
+	useEffect(() => {
+		const totalPages = Math.max(1, Math.ceil((completedTotal || 0) / PAGE_SIZE));
+		if (completedPage > totalPages) {
+			setCompletedPage(totalPages);
+		}
+	}, [completedTotal, completedPage]);
 	
 	const onAddTaskClick = useCallback(() => {
 		navigate('/tasks/create');
@@ -160,24 +199,34 @@ const TasksListController = () => {
 
 	const onSearchChange = useCallback((value: string) => {
 		setSearchTerm(value);
-		setCurrentPage(1);
+		setPendingPage(1);
+		setCompletedPage(1);
 	}, []);
 
-	const onPageChange = useCallback((page: number) => {
-		setCurrentPage(page);
+	const onPendingPageChange = useCallback((page: number) => {
+		setPendingPage(page);
+	}, []);
+
+	const onCompletedPageChange = useCallback((page: number) => {
+		setCompletedPage(page);
 	}, []);
 	
 	const providerValues: ITasksListContollerContext = useMemo(
 		() => ({
-			tasks: visibleTasks,
-			loading: loading && visibleTasks.length === 0,
-			loadingPage: loading,
+			pendingTasks: visiblePendingTasks,
+			completedTasks: visibleCompletedTasks,
+			loadingPending: loadingPending && visiblePendingTasks.length === 0,
+			loadingCompleted: loadingCompleted && visibleCompletedTasks.length === 0,
+			loadingPendingPage: loadingPending,
+			loadingCompletedPage: loadingCompleted,
 			actionLoadingId,
 			selectedTask,
 			isModalOpen,
 			searchTerm,
-			currentPage,
-			total,
+			pendingPage,
+			completedPage,
+			pendingTotal,
+			completedTotal,
 			onAddTaskClick,
 			onEditTask,
 			onDeleteTask,
@@ -185,17 +234,22 @@ const TasksListController = () => {
 			onOpenTask,
 			onCloseModal,
 			onSearchChange,
-			onPageChange
+			onPendingPageChange,
+			onCompletedPageChange
 		}),
 		[
-			visibleTasks,
-			loading,
+			visiblePendingTasks,
+			visibleCompletedTasks,
+			loadingPending,
+			loadingCompleted,
 			actionLoadingId,
 			selectedTask,
 			isModalOpen,
 			searchTerm,
-			currentPage,
-			total,
+			pendingPage,
+			completedPage,
+			pendingTotal,
+			completedTotal,
 			onAddTaskClick,
 			onEditTask,
 			onDeleteTask,
@@ -203,7 +257,8 @@ const TasksListController = () => {
 			onOpenTask,
 			onCloseModal,
 			onSearchChange,
-			onPageChange
+			onPendingPageChange,
+			onCompletedPageChange
 		]
 	);
 	
