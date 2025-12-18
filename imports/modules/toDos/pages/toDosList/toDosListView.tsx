@@ -1,6 +1,7 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
+import { useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -9,7 +10,6 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import Avatar from '@mui/material/Avatar';
 import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
@@ -22,8 +22,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
-import PendingActionsIcon from '@mui/icons-material/PendingActions';
-import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { ITask } from '../../api/toDosSch';
 import SysIcon from '../../../../ui/components/sysIcon/sysIcon';
 import { styled } from '@mui/material/styles';
@@ -96,15 +99,9 @@ const TasksListView = () => {
 	const firstName = username?.split(' ')?.[0] || username;
 	const PAGE_SIZE = 4;
 	const totalPages = Math.max(1, Math.ceil((controller.total || 0) / PAGE_SIZE));
-
-	const getTaskIconProps = (task: ITask) => {
-		const isCompleted = task.status === 'completed';
-		return {
-			IconComponent: isCompleted ? TaskAltIcon : PendingActionsIcon,
-			bgcolor: '#E3F2FD',
-			color: '#0D47A1'
-		};
-	};
+	const navigate = useNavigate();
+	const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+	const [menuTask, setMenuTask] = useState<ITask | null>(null);
 
 	const renderSecondaryText = (task?: ITask) => {
 		const createdByLabel =
@@ -112,6 +109,17 @@ const TasksListView = () => {
 				? 'Você'
 				: task?.createdByName || task?.createdBy || 'N/A';
 		return `Criada por: ${createdByLabel}`;
+	};
+
+	const openActionsMenu = (event: React.MouseEvent<HTMLElement>, task: ITask) => {
+		event.stopPropagation();
+		setMenuAnchor(event.currentTarget);
+		setMenuTask(task);
+	};
+
+	const closeActionsMenu = () => {
+		setMenuAnchor(null);
+		setMenuTask(null);
 	};
 
 	const renderStatusChip = (status: string) => (
@@ -156,9 +164,20 @@ const TasksListView = () => {
 			</WelcomeSection>
 
 			<HeaderRow>
-				<Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>
-					ToDo List
-				</Typography>
+				<Stack direction="row" spacing={1.5} alignItems="center">
+					<Button
+						variant="outlined"
+						size="small"
+						startIcon={<SysIcon name="chevronLeft" />}
+						onClick={() => navigate('/')}
+						sx={{ textTransform: 'none' }}
+					>
+						Voltar
+					</Button>
+					<Typography variant="h5" sx={{ color: '#444444', fontSize: 20, fontWeight: 600 }}>
+						ToDo List
+					</Typography>
+				</Stack>
 				<TextField
 					placeholder="Buscar na descrição"
 					value={controller.searchTerm}
@@ -203,48 +222,38 @@ const TasksListView = () => {
 					) : (
 						<List disablePadding>
 							{controller.tasks.map((task, idx) => {
-								const iconProps = getTaskIconProps(task);
 								return (
 									<React.Fragment key={task._id || idx}>
 										<ListItem
+												sx={{ px: 1.5 }}
 												secondaryAction={
 													<Stack direction="row" spacing={1} alignItems="center">
 														{task.createdBy === Meteor.userId() && (
-															<>
-																<IconButton
-																	edge="end"
-																	aria-label="Editar tarefa"
-																	onClick={(e) => {
-																		e.stopPropagation();
-																		controller.onEditTask(task);
-																	}}
-																	size="small"
-																>
-																	<SysIcon name="edit" fontSize="small" />
-																</IconButton>
-																<IconButton
-																	edge="end"
-																	aria-label="Excluir tarefa"
-																	onClick={(e) => {
-																		e.stopPropagation();
-																		controller.onDeleteTask(task);
-																	}}
-																	size="small"
-																	disabled={controller.actionLoadingId === task._id}
-																>
-																	<SysIcon name="delete" fontSize="small" />
-																</IconButton>
-															</>
+															<IconButton
+																edge="end"
+																aria-label="Ações da tarefa"
+																onClick={(e) => openActionsMenu(e, task)}
+																size="small"
+																disabled={controller.actionLoadingId === task._id}
+															>
+																<MoreVertIcon fontSize="small" />
+															</IconButton>
 														)}
 													</Stack>
 												}
 												disablePadding
 												alignItems="flex-start"
 											>
-												<ListItemIcon sx={{ minWidth: 48 }}>
+												<ListItemIcon sx={{ minWidth: 56, justifyContent: 'center' }}>
 													<Checkbox
 														edge="start"
 														checked={task.status === 'completed'}
+														icon={<RadioButtonUncheckedIcon />}
+														checkedIcon={<CheckCircleIcon />}
+														sx={{
+															p: 0.5,
+															'& .MuiSvgIcon-root': { fontSize: 26 }
+														}}
 														onClick={(e) => {
 															e.stopPropagation();
 															controller.onToggleStatus(task);
@@ -254,14 +263,6 @@ const TasksListView = () => {
 													/>
 												</ListItemIcon>
 												<ListItemButton onClick={() => controller.onOpenTask(task)} sx={{ py: 1.5 }}>
-													<Avatar
-														sx={{
-															bgcolor: iconProps.bgcolor,
-															color: iconProps.color,
-															mr: 2
-														}}>
-														<iconProps.IconComponent fontSize="small" />
-													</Avatar>
 													<ListItemText
 														primary={
 															<Typography
@@ -298,6 +299,32 @@ const TasksListView = () => {
 					)}
 				</Box>
 			</ListContainer>
+
+			<Menu
+				anchorEl={menuAnchor}
+				open={!!menuAnchor}
+				onClose={closeActionsMenu}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+				transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+			>
+				<MenuItem
+					onClick={() => {
+						if (menuTask) controller.onEditTask(menuTask);
+						closeActionsMenu();
+					}}
+				>
+					Editar
+				</MenuItem>
+				<MenuItem
+					onClick={() => {
+						if (menuTask) controller.onDeleteTask(menuTask);
+						closeActionsMenu();
+					}}
+					disabled={controller.actionLoadingId === menuTask?._id}
+				>
+					Excluir
+				</MenuItem>
+			</Menu>
 
 			<PaginationRow>
 				<Button

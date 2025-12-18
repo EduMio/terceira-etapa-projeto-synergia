@@ -1,5 +1,5 @@
 // File: imports/sysPages/pages/home/home.tsx
-import React from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { useTracker } from 'meteor/react-meteor-data';
 import { useNavigate } from 'react-router-dom';
@@ -11,9 +11,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import Avatar from '@mui/material/Avatar';
 import Checkbox from '@mui/material/Checkbox';
-import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -21,7 +19,14 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import SysIcon from '/imports/ui/components/sysIcon/sysIcon';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import DoubleArrowIcon from '@mui/icons-material/DoubleArrow';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AppLayoutContext, { IAppLayoutContext } from '/imports/app/appLayoutProvider/appLayoutContext';
 import { styled } from '@mui/material/styles';
 import { tasksApi } from '/imports/modules/toDos/api/toDosApi';
 import { ITask } from '/imports/modules/toDos/api/toDosSch';
@@ -100,13 +105,14 @@ const PaginationButton = styled(Button)(({ theme }) => ({
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const { showNotification } = useContext<IAppLayoutContext>(AppLayoutContext);
+  const [selectedTask, setSelectedTask] = useState<ITask | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [menuTask, setMenuTask] = useState<ITask | null>(null);
   
-  const currentUser = useTracker(() => {
-    return Meteor.user();
-  }, []);
-  const [selectedTask, setSelectedTask] = React.useState<ITask | null>(null);
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  
+  const currentUser = useTracker(() => Meteor.user(), []);
   const username = currentUser?.profile?.name || currentUser?.username || currentUser?.emails?.[0]?.address || 'Usuário';
   const firstName = username?.split(' ')?.[0] || username;
 
@@ -131,15 +137,6 @@ const HomePage: React.FC = () => {
   const renderSecondaryText = (taskCreatedBy?: string) =>
     `Criada por: ${taskCreatedBy === Meteor.userId() ? 'Você' : (taskCreatedBy || 'N/A')}`;
 
-  const renderStatusChip = (status: string) => (
-    <Chip
-      size="small"
-      label={status === 'completed' ? 'Concluída' : 'Não concluída'}
-      color={status === 'completed' ? 'success' : 'default'}
-      variant={status === 'completed' ? 'filled' : 'outlined'}
-    />
-  );
-
   const handleOpenTask = (task: ITask) => {
     setSelectedTask(task);
     setIsModalOpen(true);
@@ -148,6 +145,85 @@ const HomePage: React.FC = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedTask(null);
+  };
+
+  const handleEditTask = useCallback((task: ITask) => {
+    if (!task?._id) return;
+    if (task.createdBy && task.createdBy !== Meteor.userId()) {
+      showNotification({
+        type: 'error',
+        title: 'Permissão negada',
+        message: 'Somente o criador pode editar esta tarefa.'
+      });
+      return;
+    }
+    navigate(`/tasks/edit/${task._id}`);
+  }, [navigate, showNotification]);
+
+  const handleDeleteTask = useCallback((task: ITask) => {
+    if (!task?._id) return;
+    if (task.createdBy && task.createdBy !== Meteor.userId()) {
+      showNotification({
+        type: 'error',
+        title: 'Permissão negada',
+        message: 'Somente o criador pode remover esta tarefa.'
+      });
+      return;
+    }
+    if (selectedTask?._id === task._id) {
+      setIsModalOpen(false);
+      setSelectedTask(null);
+    }
+    setActionLoadingId(task._id);
+    tasksApi.remove({ _id: task._id }, (e) => {
+      setActionLoadingId(null);
+      if (e) {
+        showNotification({
+          type: 'error',
+          title: 'Erro ao excluir',
+          message: e.reason || 'Falha ao excluir a tarefa'
+        });
+        return;
+      }
+      showNotification({
+        type: 'success',
+        title: 'Tarefa excluída',
+        message: 'Tarefa removida com sucesso'
+      });
+    });
+  }, [selectedTask, showNotification]);
+
+  const handleToggleStatus = useCallback((task: ITask) => {
+    if (!task?._id) return;
+    const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+    setActionLoadingId(task._id);
+    tasksApi.update({ _id: task._id, status: newStatus, title: task.title, description: task.description }, (e) => {
+      setActionLoadingId(null);
+      if (e) {
+        showNotification({
+          type: 'error',
+          title: 'Erro ao atualizar',
+          message: e.reason || 'Falha ao atualizar a tarefa'
+        });
+        return;
+      }
+      showNotification({
+        type: 'success',
+        title: 'Tarefa atualizada',
+        message: 'Status atualizado com sucesso'
+      });
+    });
+  }, [showNotification]);
+
+  const openActionsMenu = (event: React.MouseEvent<HTMLElement>, task: ITask) => {
+    event.stopPropagation();
+    setMenuAnchor(event.currentTarget);
+    setMenuTask(task);
+  };
+
+  const closeActionsMenu = () => {
+    setMenuAnchor(null);
+    setMenuTask(null);
   };
   
   return (
@@ -175,60 +251,79 @@ const HomePage: React.FC = () => {
           </Box>
         ) : (
           <List disablePadding>
-            {recentTasks.map((task, idx) => (
-              <React.Fragment key={task._id || idx}>
-                <ListItem
-                  secondaryAction={
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      {renderStatusChip(task.status)}
-                    </Stack>
-                  }
-                  disablePadding
-                  alignItems="flex-start"
-                >
-                  <ListItemIcon sx={{ minWidth: 48 }}>
-                    <Checkbox
-                      edge="start"
-                      checked={task.status === 'completed'}
-                      disabled
-                      inputProps={{ 'aria-label': `Status da tarefa ${task.title}` }}
-                    />
-                  </ListItemIcon>
-                  <ListItemButton onClick={() => handleOpenTask(task)} sx={{ py: 1.5 }}>
-                    <Avatar sx={{ bgcolor: '#E0E0E0', color: '#333333', mr: 2 }}>
-                      <SysIcon name="assignmentTurnedIn" />
-                    </Avatar>
-                    <ListItemText
-                      primary={
-                        <Typography
-                          variant="subtitle1"
-                          sx={{
-                            fontWeight: 600,
-                            color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
-                            textDecoration: task.status === 'completed' ? 'line-through' : 'none'
-                          }}
+            {recentTasks.map((task, idx) => {
+              const isCompleted = task.status === 'completed';
+              return (
+                <React.Fragment key={task._id || idx}>
+                  <ListItem
+                    sx={{ px: 1.5 }}
+                    secondaryAction={
+                      task.createdBy === Meteor.userId() && (
+                        <IconButton
+                          edge="end"
+                          aria-label="Ações da tarefa"
+                          onClick={(e) => openActionsMenu(e, task)}
+                          size="small"
+                          disabled={actionLoadingId === task._id}
                         >
-                          {task.title || 'Sem título'}
-                        </Typography>
-                      }
-                      secondary={
-                        <Stack spacing={0.5}>
-                          <Typography variant="body2" color="text.secondary">
-                            {renderSecondaryText(task.createdBy)}
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      )
+                    }
+                    disablePadding
+                    alignItems="flex-start"
+                  >
+                    <ListItemIcon sx={{ minWidth: 56, justifyContent: 'center' }}>
+                      <Checkbox
+                        edge="start"
+                        checked={isCompleted}
+                        icon={<RadioButtonUncheckedIcon />}
+                        checkedIcon={<CheckCircleIcon />}
+                        sx={{
+                          p: 0.5,
+                          '& .MuiSvgIcon-root': { fontSize: 26 }
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleStatus(task);
+                        }}
+                        disabled={actionLoadingId === task._id}
+                        inputProps={{ 'aria-label': `Marcar tarefa ${task.title} como concluída` }}
+                      />
+                    </ListItemIcon>
+                    <ListItemButton onClick={() => handleOpenTask(task)} sx={{ py: 1.25 }}>
+                      <ListItemText
+                        primary={
+                          <Typography
+                            variant="subtitle1"
+                            sx={{
+                              fontWeight: 600,
+                              color: isCompleted ? 'text.secondary' : 'text.primary',
+                              textDecoration: isCompleted ? 'line-through' : 'none'
+                            }}
+                          >
+                            {task.title || 'Sem título'}
                           </Typography>
-                          {task.description && (
+                        }
+                        secondary={
+                          <Stack spacing={0.5}>
                             <Typography variant="body2" color="text.secondary">
-                              {task.description}
+                              {renderSecondaryText(task.createdBy)}
                             </Typography>
-                          )}
-                        </Stack>
-                      }
-                    />
-                  </ListItemButton>
-                </ListItem>
-                {idx < recentTasks.length - 1 && <Divider component="li" />}
-              </React.Fragment>
-            ))}
+                            {task.description && (
+                              <Typography variant="body2" color="text.secondary">
+                                {task.description}
+                              </Typography>
+                            )}
+                          </Stack>
+                        }
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                  {idx < recentTasks.length - 1 && <Divider component="li" />}
+                </React.Fragment>
+              );
+            })}
           </List>
         )}
       </ListContainer>
@@ -247,9 +342,6 @@ const HomePage: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             {selectedTask?.description || selectedTask?.title}
           </Typography>
-          <Stack direction="row" spacing={1} alignItems="center" mb={2}>
-            {selectedTask && renderStatusChip(selectedTask.status)}
-          </Stack>
           <Typography variant="body2" color="text.secondary" gutterBottom>
             {renderSecondaryText(selectedTask?.createdBy)}
           </Typography>
@@ -261,8 +353,41 @@ const HomePage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal}>Fechar</Button>
+          {selectedTask?.createdBy === Meteor.userId() && (
+            <Button
+              onClick={() => selectedTask && handleEditTask(selectedTask)}
+            >
+              Editar
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
+      
+      <Menu
+        anchorEl={menuAnchor}
+        open={!!menuAnchor}
+        onClose={closeActionsMenu}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (menuTask) handleEditTask(menuTask);
+            closeActionsMenu();
+          }}
+        >
+          Editar
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (menuTask) handleDeleteTask(menuTask);
+            closeActionsMenu();
+          }}
+          disabled={actionLoadingId === menuTask?._id}
+        >
+          Excluir
+        </MenuItem>
+      </Menu>
       
       <FooterSection>
         <Button
@@ -286,7 +411,7 @@ const HomePage: React.FC = () => {
           onClick={handleGoToTasks}
         >
           Minhas Tarefas
-          <SysIcon name="doubleArrow" sx={{ ml: 1 }} />
+          <DoubleArrowIcon sx={{ ml: 1 }} />
         </Button>
 
       </FooterSection>

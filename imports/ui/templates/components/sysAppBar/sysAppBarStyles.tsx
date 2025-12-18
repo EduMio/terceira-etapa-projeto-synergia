@@ -16,8 +16,8 @@ const SysAppBarStyles: ISysAppBarStyles = {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
+    backgroundColor: '#bdbdbd',
+    color: '#1e1e1e',
   })),
   container: styled(Box)(({ theme }) => ({
     display: 'flex',

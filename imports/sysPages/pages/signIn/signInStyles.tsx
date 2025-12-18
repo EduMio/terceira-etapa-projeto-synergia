@@ -1,5 +1,4 @@
 import React from 'react';
-import Paper from '@mui/material/Paper';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 
@@ -16,10 +15,11 @@ const SignInStyles: ISignInStyles = {
 	Container: styled(Box)(({ theme }) => ({
 		minHeight: '100vh',
 		width: '100%',
-		backgroundColor: theme.palette.background.default,
+		backgroundColor: theme.palette.common.white,
 		display: 'flex',
-		flexDirection: 'column',
-		padding: theme.spacing(2)
+		alignItems: 'center',
+		justifyContent: 'center',
+		padding: theme.spacing(3)
 	})),
 	Header: styled(Box)(({ theme }) => ({
 		width: '100%',
@@ -37,34 +37,32 @@ const SignInStyles: ISignInStyles = {
 	})),
 	Content: styled(Box)(({ theme }) => ({
 		width: '100%',
-		maxWidth: '400px',
+		maxWidth: '520px',
 		display: 'flex',
 		flexDirection: 'column',
 		justifyContent: 'center',
 		alignItems: 'center',
-		gap: theme.spacing(3),
-		margin: '0 auto',
-		padding: theme.spacing(2)
+		gap: theme.spacing(2.5),
+		margin: '0 auto'
 	})),
-	FormContainer: styled(Paper)(({ theme }) => ({
+	FormContainer: styled(Box)(({ theme }) => ({
 		width: '100%',
-		padding: theme.spacing(3),
-		borderRadius: theme.shape.borderRadius,
-		boxShadow: 'none',
+		maxWidth: '440px',
+		padding: 0,
 		display: 'flex',
 		flexDirection: 'column',
 		justifyContent: 'flex-start',
 		alignItems: 'center',
-		gap: theme.spacing(2),
-		border: '1px solid lightgray'
+		gap: theme.spacing(2)
 	})),
 	FormWrapper: styled(Box)(({ theme }) => ({
 		width: '100%',
+		maxWidth: '440px',
 		display: 'flex',
 		flexDirection: 'column',
 		justifyContent: 'center',
 		alignItems: 'center',
-		gap: theme.spacing(2)
+		gap: theme.spacing(1.75)
 	}))
 };
 

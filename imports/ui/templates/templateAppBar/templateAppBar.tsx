@@ -31,13 +31,9 @@ const BoilerplateLogo: React.FC = () => {
 	return (
 		<Typography
 			variant="subtitle1"
-			color={(theme) => theme.palette.sysText?.tertiary}
-			sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-			{'{ '}
-			<Typography color={(theme) => theme.palette.primary.contrastText} variant="inherit">
-				Boilerplate
-			</Typography>{' '}
-			{'}'}
+			color="#1e1e1e"
+			sx={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800, fontSize: 42 }}>
+			ToDo List
 		</Typography>
 	);
 };

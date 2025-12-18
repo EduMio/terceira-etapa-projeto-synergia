@@ -41,27 +41,30 @@ const SignInPage: React.FC = () => {
 	return (
 		<Container>
 			<Content>
-				<Typography variant="h1" fontWeight="900" sx={{ 
-					color: 'black', 
-					fontStyle: 'normal',
-					fontSize: '60px',
-					lineHeight: '100%',
-					letterSpacing: '0.15%',
-					textAlign: 'center',
-					leadingTrim: 'NONE'
-
-				}}>
+				<Typography
+					variant="h1"
+					fontWeight={900}
+					sx={{
+						color: '#1e1e1e',
+						fontSize: 40,
+						lineHeight: 1.1,
+						letterSpacing: '0.4px',
+						textAlign: 'center'
+					}}>
 					ToDo List
 				</Typography>
 				
-				<Typography variant="body1" sx={{ 
-					color: 'black', 
-					textAlign: 'center', 
-					mt: 2, 
-					mb: 4 ,
-					fontWeight: 400,
-					fontSize: 18,
-				}}>
+				<Typography
+					variant="body1"
+					sx={{
+						color: '#1e1e1e',
+						textAlign: 'center',
+						mt: 1.5,
+						mb: 3,
+						fontWeight: 400,
+						fontSize: 16,
+						maxWidth: 440
+					}}>
 					Boas-vindas a sua lista de tarefas.<br />Insira seu e-mail e senha para efetuar o login:
 				</Typography>
 				
@@ -69,9 +72,70 @@ const SignInPage: React.FC = () => {
 				<SysForm schema={signInSchema} onSubmit={handleSubmit} debugAlerts={false}>
 					<FormContainer>
 						<FormWrapper>
-							<SysTextField name="email" label="E-mail" fullWidth placeholder="mail@mail.com" />
-							<SysTextField label="Senha" fullWidth name="password" placeholder="••••••••" type="password" />
-							<SysFormButton variant="contained" color="primary" fullWidth>
+							<SysTextField
+								name="email"
+								label="E-mail"
+								fullWidth
+								placeholder="mail@mail.com"
+								sxMap={{
+									textField: {
+										'& .MuiOutlinedInput-root': {
+											borderRadius: 6,
+											height: 48
+										},
+										'& .MuiOutlinedInput-notchedOutline': {
+											borderColor: '#4a4a4a'
+										},
+										'&:hover .MuiOutlinedInput-notchedOutline': {
+											borderColor: '#4a4a4a'
+										},
+										'& .MuiInputBase-input': {
+											padding: '12px 14px',
+											fontSize: 14
+										}
+									}
+								}}
+							/>
+							<SysTextField
+								label="Senha"
+								fullWidth
+								name="password"
+								placeholder="••••••••"
+								type="password"
+								sxMap={{
+									textField: {
+										'& .MuiOutlinedInput-root': {
+											borderRadius: 6,
+											height: 48
+										},
+										'& .MuiOutlinedInput-notchedOutline': {
+											borderColor: '#4a4a4a'
+										},
+										'&:hover .MuiOutlinedInput-notchedOutline': {
+											borderColor: '#4a4a4a'
+										},
+										'& .MuiInputBase-input': {
+											padding: '12px 14px',
+											fontSize: 14
+										}
+									}
+								}}
+							/>
+							<SysFormButton
+								variant="contained"
+								color="primary"
+								fullWidth
+								sx={{
+									mt: 0.5,
+									height: 48,
+									borderRadius: 7,
+									backgroundColor: '#c4c4c4',
+									color: '#2c2c2c',
+									fontWeight: 700,
+									textTransform: 'none',
+									'&:hover': { backgroundColor: '#b5b5b5' },
+									'&:active': { backgroundColor: '#a5a5a5' }
+								}}>
 								Entrar
 							</SysFormButton>
 						</FormWrapper>
@@ -81,7 +145,7 @@ const SignInPage: React.FC = () => {
 				<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, mt: 4 }}>
 					<Button 
 						variant="text" 
-						sx={{ color: 'black', textAlign: 'left' }} 
+						sx={{ color: '#1e1e1e', textAlign: 'left', textTransform: 'none', fontSize: 14, fontWeight: 500 }} 
 						onClick={handleForgotPassword}
 					>
 						<Typography variant="body2">Esqueceu sua senha? Clique aqui</Typography>
@@ -89,7 +153,7 @@ const SignInPage: React.FC = () => {
 					
 					<Button 
 						variant="text" 
-						sx={{ color: 'black', textAlign: 'left' }} 
+						sx={{ color: '#1e1e1e', textAlign: 'left', textTransform: 'none', fontSize: 14, fontWeight: 500 }} 
 						onClick={handleRegister}
 					>
 						<Typography variant="body2">Novo por aqui? Cadastre-se</Typography>

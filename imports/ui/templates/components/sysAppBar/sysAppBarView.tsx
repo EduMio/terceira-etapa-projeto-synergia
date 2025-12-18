@@ -19,31 +19,7 @@ const SysAppBarView: React.FC<ISysAppBar> = ({logo}) => {
     <Styles.wrapper>
       <Styles.container>
         {logo}
-        <Styles.navContainerDesktop>
-          {controller.menuOptions.map(option => (
-            <RenderWithPermission key={option?.name} resources={option?.resources}>
-              <SysNavLink
-                active={sysRoutes.checkIsActiveRoute(option?.path)}
-                sysOptions={option!}
-              />
-            </RenderWithPermission>
-          ))}
-        </Styles.navContainerDesktop>
-        <Styles.navContainerMobile>
-          <Fragment>
-            <Styles.iconButton onClick={controller.abrirMenuMobile}>
-              <SysIcon name='menu' sx={{ width: '24px', height: '24px' }}/>
-            </Styles.iconButton>
-            <SysMenu
-              ref={controller.menuMobileRef}
-              options={controller.getOpcoesMenuMobile()}
-              activeArrow
-              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            />
-
-          </Fragment>
-        </Styles.navContainerMobile>
+        {/* Navigation buttons removed per request */}
         <Fragment>
           <SysAvatar 
             name={ controller.userName } 
