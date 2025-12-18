@@ -22,6 +22,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import { ITask } from '../../api/toDosSch';
 import SysIcon from '../../../../ui/components/sysIcon/sysIcon';
 import { styled } from '@mui/material/styles';
@@ -98,9 +100,9 @@ const TasksListView = () => {
 	const getTaskIconProps = (task: ITask) => {
 		const isCompleted = task.status === 'completed';
 		return {
-			name: isCompleted ? 'taskAlt' : 'assignment',
-			bgcolor: isCompleted ? '#E6F4EA' : '#E3F2FD',
-			color: isCompleted ? '#1B5E20' : '#0D47A1'
+			IconComponent: isCompleted ? TaskAltIcon : PendingActionsIcon,
+			bgcolor: '#E3F2FD',
+			color: '#0D47A1'
 		};
 	};
 
@@ -207,7 +209,6 @@ const TasksListView = () => {
 										<ListItem
 												secondaryAction={
 													<Stack direction="row" spacing={1} alignItems="center">
-														{renderStatusChip(task.status)}
 														{task.createdBy === Meteor.userId() && (
 															<>
 																<IconButton
@@ -259,7 +260,7 @@ const TasksListView = () => {
 															color: iconProps.color,
 															mr: 2
 														}}>
-														<SysIcon name={iconProps.name} />
+														<iconProps.IconComponent fontSize="small" />
 													</Avatar>
 													<ListItemText
 														primary={
