@@ -18,6 +18,7 @@ interface ITasksListContollerContext {
 	searchTerm: string;
 	currentPage: number;
 	total: number;
+	loadingPage: boolean;
 	onAddTaskClick: () => void;
 	onEditTask: (task: ITask) => void;
 	onDeleteTask: (task: ITask) => void;
@@ -37,6 +38,7 @@ const TasksListController = () => {
 	const { showNotification } = useContext<IAppLayoutContext>(AppLayoutContext);
 
 	const PAGE_SIZE = 4;
+	const [visibleTasks, setVisibleTasks] = useState<ITask[]>([]);
 	const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 	const [selectedTask, setSelectedTask] = useState<ITask | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,6 +62,12 @@ const TasksListController = () => {
 			total: countDoc?.count ?? 0
 		};
 	}, [searchTerm, currentPage]);
+
+	useEffect(() => {
+		if (!loading) {
+			setVisibleTasks(tasks);
+		}
+	}, [loading, tasks]);
 
 	useEffect(() => {
 		const totalPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
@@ -161,8 +169,9 @@ const TasksListController = () => {
 	
 	const providerValues: ITasksListContollerContext = useMemo(
 		() => ({
-			tasks,
-			loading,
+			tasks: visibleTasks,
+			loading: loading && visibleTasks.length === 0,
+			loadingPage: loading,
 			actionLoadingId,
 			selectedTask,
 			isModalOpen,
@@ -179,7 +188,7 @@ const TasksListController = () => {
 			onPageChange
 		}),
 		[
-			tasks,
+			visibleTasks,
 			loading,
 			actionLoadingId,
 			selectedTask,

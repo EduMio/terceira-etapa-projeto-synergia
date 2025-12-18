@@ -76,6 +76,17 @@ const PaginationRow = styled(Box)(({ theme }) => ({
 	borderTop: `1px solid ${theme.palette.divider}`
 }));
 
+const LoadingOverlay = styled(Box)(({ theme }) => ({
+	position: 'absolute',
+	inset: 0,
+	display: 'flex',
+	alignItems: 'center',
+	justifyContent: 'center',
+	backgroundColor: theme.palette.background.paper,
+	opacity: 0.8,
+	zIndex: 1
+}));
+
 const TasksListView = () => {
 	const controller = useContext(TasksListControllerContext);
 	const currentUser = useTracker(() => Meteor.user(), []);
@@ -168,111 +179,123 @@ const TasksListView = () => {
 			</HeaderRow>
 
 			<ListContainer>
-				{controller.loading ? (
-					<Box display="flex" alignItems="center" justifyContent="center" py={4} gap={2}>
-						<CircularProgress size={24} />
-						<Typography variant="body1">Carregando tarefas...</Typography>
-					</Box>
-				) : controller.tasks.length === 0 ? (
-					<Box display="flex" alignItems="center" justifyContent="center" py={4}>
-						<Typography variant="body1">Tarefas não encontradas</Typography>
-					</Box>
-				) : (
-					<List disablePadding>
-				{controller.tasks.map((task, idx) => {
-					const iconProps = getTaskIconProps(task);
-					return (
-						<React.Fragment key={task._id || idx}>
-							<ListItem
-									secondaryAction={
-										<Stack direction="row" spacing={1} alignItems="center">
-											{renderStatusChip(task.status)}
-											{task.createdBy === Meteor.userId() && (
-												<>
-													<IconButton
-														edge="end"
-														aria-label="Editar tarefa"
+				<Box position="relative">
+					{controller.loadingPage && controller.tasks.length > 0 && (
+						<LoadingOverlay>
+							<Stack direction="row" spacing={1} alignItems="center">
+								<CircularProgress size={22} />
+								<Typography variant="body2">Carregando...</Typography>
+							</Stack>
+						</LoadingOverlay>
+					)}
+
+					{controller.loading && controller.tasks.length === 0 ? (
+						<Box display="flex" alignItems="center" justifyContent="center" py={4} gap={2}>
+							<CircularProgress size={24} />
+							<Typography variant="body1">Carregando tarefas...</Typography>
+						</Box>
+					) : controller.tasks.length === 0 ? (
+						<Box display="flex" alignItems="center" justifyContent="center" py={4}>
+							<Typography variant="body1">Tarefas não encontradas</Typography>
+						</Box>
+					) : (
+						<List disablePadding>
+							{controller.tasks.map((task, idx) => {
+								const iconProps = getTaskIconProps(task);
+								return (
+									<React.Fragment key={task._id || idx}>
+										<ListItem
+												secondaryAction={
+													<Stack direction="row" spacing={1} alignItems="center">
+														{renderStatusChip(task.status)}
+														{task.createdBy === Meteor.userId() && (
+															<>
+																<IconButton
+																	edge="end"
+																	aria-label="Editar tarefa"
+																	onClick={(e) => {
+																		e.stopPropagation();
+																		controller.onEditTask(task);
+																	}}
+																	size="small"
+																>
+																	<SysIcon name="edit" fontSize="small" />
+																</IconButton>
+																<IconButton
+																	edge="end"
+																	aria-label="Excluir tarefa"
+																	onClick={(e) => {
+																		e.stopPropagation();
+																		controller.onDeleteTask(task);
+																	}}
+																	size="small"
+																	disabled={controller.actionLoadingId === task._id}
+																>
+																	<SysIcon name="delete" fontSize="small" />
+																</IconButton>
+															</>
+														)}
+													</Stack>
+												}
+												disablePadding
+												alignItems="flex-start"
+											>
+												<ListItemIcon sx={{ minWidth: 48 }}>
+													<Checkbox
+														edge="start"
+														checked={task.status === 'completed'}
 														onClick={(e) => {
 															e.stopPropagation();
-															controller.onEditTask(task);
+															controller.onToggleStatus(task);
 														}}
-														size="small"
-													>
-														<SysIcon name="edit" fontSize="small" />
-													</IconButton>
-													<IconButton
-														edge="end"
-														aria-label="Excluir tarefa"
-														onClick={(e) => {
-															e.stopPropagation();
-															controller.onDeleteTask(task);
-														}}
-														size="small"
 														disabled={controller.actionLoadingId === task._id}
-													>
-														<SysIcon name="delete" fontSize="small" />
-													</IconButton>
-												</>
-											)}
-										</Stack>
-									}
-									disablePadding
-									alignItems="flex-start"
-								>
-									<ListItemIcon sx={{ minWidth: 48 }}>
-										<Checkbox
-											edge="start"
-											checked={task.status === 'completed'}
-											onClick={(e) => {
-												e.stopPropagation();
-												controller.onToggleStatus(task);
-											}}
-											disabled={controller.actionLoadingId === task._id}
-											inputProps={{ 'aria-label': `Marcar tarefa ${task.description || task.title} como concluída` }}
-										/>
-									</ListItemIcon>
-									<ListItemButton onClick={() => controller.onOpenTask(task)} sx={{ py: 1.5 }}>
-										<Avatar
-											sx={{
-												bgcolor: iconProps.bgcolor,
-												color: iconProps.color,
-												mr: 2
-											}}>
-											<SysIcon name={iconProps.name} />
-										</Avatar>
-										<ListItemText
-											primary={
-												<Typography
-													variant="subtitle1"
-													sx={{
-														fontWeight: 600,
-														color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
-														textDecoration: task.status === 'completed' ? 'line-through' : 'none'
-													}}
-												>
-													{task.title || 'Sem título'}
-												</Typography>
-											}
-											secondary={
-												<Stack spacing={0.5}>
-													<Typography variant="body2" color="text.secondary">
-														{renderSecondaryText(task)}
-													</Typography>
-													{task.description && (
-														<Typography variant="body2" color="text.secondary">
-															{task.description}
-														</Typography>
-													)}
-												</Stack>
-											}
-										/>
-									</ListItemButton>
-								</ListItem>
-								{idx < controller.tasks.length - 1 && <Divider component="li" />}
-							</React.Fragment>
-						))}
-					</List>
-				)}
+														inputProps={{ 'aria-label': `Marcar tarefa ${task.description || task.title} como concluída` }}
+													/>
+												</ListItemIcon>
+												<ListItemButton onClick={() => controller.onOpenTask(task)} sx={{ py: 1.5 }}>
+													<Avatar
+														sx={{
+															bgcolor: iconProps.bgcolor,
+															color: iconProps.color,
+															mr: 2
+														}}>
+														<SysIcon name={iconProps.name} />
+													</Avatar>
+													<ListItemText
+														primary={
+															<Typography
+																variant="subtitle1"
+																sx={{
+																	fontWeight: 600,
+																	color: task.status === 'completed' ? 'text.secondary' : 'text.primary',
+																	textDecoration: task.status === 'completed' ? 'line-through' : 'none'
+																}}
+															>
+																{task.title || 'Sem título'}
+															</Typography>
+														}
+														secondary={
+															<Stack spacing={0.5}>
+																<Typography variant="body2" color="text.secondary">
+																	{renderSecondaryText(task)}
+																</Typography>
+																{task.description && (
+																	<Typography variant="body2" color="text.secondary">
+																		{task.description}
+																	</Typography>
+																)}
+															</Stack>
+														}
+													/>
+												</ListItemButton>
+											</ListItem>
+											{idx < controller.tasks.length - 1 && <Divider component="li" />}
+										</React.Fragment>
+									);
+								})}
+						</List>
+					)}
+				</Box>
 			</ListContainer>
 
 			<PaginationRow>
@@ -280,7 +303,7 @@ const TasksListView = () => {
 					variant="outlined"
 					size="small"
 					startIcon={<SysIcon name="chevronLeft" />}
-					disabled={controller.currentPage === 1 || controller.loading}
+					disabled={controller.currentPage === 1 || controller.loadingPage}
 					onClick={() => controller.onPageChange(Math.max(1, controller.currentPage - 1))}
 				>
 					Anterior
@@ -292,7 +315,7 @@ const TasksListView = () => {
 					variant="outlined"
 					size="small"
 					endIcon={<SysIcon name="chevronRight" />}
-					disabled={controller.loading || controller.currentPage >= totalPages}
+					disabled={controller.loadingPage || controller.currentPage >= totalPages}
 					onClick={() => controller.onPageChange(controller.currentPage + 1)}
 				>
 					Próxima
