@@ -1,11 +1,12 @@
 import { Meteor } from 'meteor/meteor';
 import assert from 'assert';
 import './toDos.server.test';
+import './userprofile.server.test';
 
-describe('typescriptApp', function () {
+describe('meteor-react-base-mui', function () {
   it('package.json has correct name', async function () {
     const { name } = await import('../package.json');
-    assert.strictEqual(name, 'typescriptApp');
+    assert.strictEqual(name, 'meteor-react-base-mui');
   });
 
   if (Meteor.isClient) {

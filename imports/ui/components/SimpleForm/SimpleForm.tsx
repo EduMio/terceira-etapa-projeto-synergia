@@ -489,55 +489,51 @@ class SimpleForm extends Component<ISimpleFormProps> {
 	};
 
 	validate = () => {
-		const fielsWithError: any = [];
+		const fielsWithError: string[] = [];
 
 		if (this.props.schema) {
 			Object.keys(this.fields).forEach((field) => {
 				if (field === 'undefined') return;
+				const fieldSchema = this.props.schema ? this.props.schema[field] : undefined;
+				const fieldLabel = fieldSchema && fieldSchema.label ? fieldSchema.label : field;
 
-				if (this.props.schema[field] && this.props.schema[field].subSchema) {
-					if (
-						this.props.schema[field] &&
-						!this.props.schema[field].optional &&
-						!this.fields[field].validateRequired() &&
-						fielsWithError.indexOf(this.props.schema[field].label) === -1
-					) {
-						fielsWithError.push(this.props.schema[field].label);
+				if (fieldSchema && fieldSchema.subSchema) {
+					const requiredMessage = `Campo obrigatório: ${fieldLabel}`;
+					if (fieldSchema && !fieldSchema.optional && !this.fields[field].validateRequired()) {
+						if (fielsWithError.indexOf(requiredMessage) === -1) {
+							fielsWithError.push(requiredMessage);
+						}
 					}
-					if (
-						this.fields[field].validateRequiredSubForm &&
-						!this.fields[field].validateRequiredSubForm() &&
-						fielsWithError.indexOf(this.props.schema[field].label) === -1
-					) {
-						fielsWithError.push(this.props.schema[field].label);
+					if (this.fields[field].validateRequiredSubForm && !this.fields[field].validateRequiredSubForm()) {
+						if (fielsWithError.indexOf(requiredMessage) === -1) {
+							fielsWithError.push(requiredMessage);
+						}
 					}
-				} else if (
-					this.props.schema[field] &&
-					!this.props.schema[field].optional &&
-					!this.fields[field].validateRequired() &&
-					fielsWithError.indexOf(this.props.schema[field].label) === -1
-				) {
-					console.log('Error');
-					fielsWithError.push(this.props.schema[field].label);
+				} else if (fieldSchema && !fieldSchema.optional && !this.fields[field].validateRequired()) {
+					const requiredMessage = `Campo obrigatório: ${fieldLabel}`;
+					if (fielsWithError.indexOf(requiredMessage) === -1) {
+						fielsWithError.push(requiredMessage);
+					}
 				}
 
 				// Validate Schema
-				if (
-					this.props.schema[field] &&
-					this.props.schema[field].validate &&
-					!this.props.schema[field].validate(this.docValue[field], this.docValue)
-				) {
-					fielsWithError.push(this.props.schema[field].label);
+				if (fieldSchema && fieldSchema.validate) {
+					const validationResult = fieldSchema.validate(this.docValue[field], this.docValue);
+					if (validationResult === false) {
+						fielsWithError.push(`${fieldLabel} inválido.`);
+					} else if (typeof validationResult === 'string') {
+						fielsWithError.push(validationResult);
+					}
 				}
 
 				// Validate Date Format
 				if (
-					this.props.schema[field] &&
-					this.props.schema[field].type === Date &&
+					fieldSchema &&
+					fieldSchema.type === Date &&
 					hasValue(this.getDoc()[field]) &&
 					!(this.getDoc()[field] instanceof Date && !isNaN(this.getDoc()[field].valueOf()))
 				) {
-					fielsWithError.push(this.props.schema[field].label);
+					fielsWithError.push(`Data inválida: ${fieldLabel}`);
 					this.fields[field] && this.fields[field].setError && this.fields[field].setError(true);
 				}
 			});
@@ -613,6 +609,14 @@ class SimpleForm extends Component<ISimpleFormProps> {
 	render() {
 		this.formElements = this.initFormElements();
 
+		const errorMessages = Array.isArray(this.state.error)
+			? this.state.error
+			: this.state.error
+				? [this.state.error]
+				: [];
+		const errorMessage =
+			errorMessages.length > 0 ? errorMessages.join(' ') : 'Há campos obrigatórios não preenchidos!';
+
 		return (
 			<div style={this.props.styles || { width: '100%' }}>
 				{this.formElements}
@@ -623,7 +627,7 @@ class SimpleForm extends Component<ISimpleFormProps> {
 						this.props.showNotification({
 							type: 'alert',
 							title: 'Operação não realizada',
-							description: 'Há campos obrigatórios não preenchidos!'
+							description: errorMessage
 						})
 					) : (
 						<div
@@ -638,7 +642,7 @@ class SimpleForm extends Component<ISimpleFormProps> {
 								}
 							}>
 							<Typography color="#FF1010" variant="subtitle2">
-								{'Há campos obrigatórios não preenchidos'}
+								{errorMessage}
 							</Typography>
 						</div>
 					))}
